@@ -3,6 +3,7 @@ library(dbarts)
 library(dplyr)
 library(MatchIt)
 library(grf)
+library(bcf)
 
 # TODO Speichern in List über index aus Iteration
 n_iter <- 1
@@ -43,7 +44,7 @@ results_test <- list(pehe_results_test = pehe_results_test,
                      coverage_results_test = coverage_results_test)
 
 # ---- Daten laden und vorbereiten ----
-#ACIC 2016 datafiles
+# ACIC 2016 datafiles
 
 X <- read.csv("C:\\Users\\luise\\Documents\\Masterarbeit\\data-ACIC-2016\\data\\x.csv")
 counterfactuals <- read.csv("C:\\Users\\luise\\Documents\\Masterarbeit\\data-ACIC-2016\\data_cf_all\\1\\zymu_13.csv")
@@ -59,6 +60,7 @@ ate_complete <- mean(y1 - y0)
 
 # merge
 X[] <- lapply(X, function(x) if(is.character(x)) factor(x) else x)
+z <- as.factor(z)
 df <- data.frame(X, z, y0, y1, y, ite)
 
 # How many treated & non-treated?
@@ -77,6 +79,16 @@ data_test <- df[-train,]
 # ATEs
 ate_train <- mean(y1[train] - y0[train])
 ate_test <- mean(y1[-train] - y0[-train])
+
+#--------------------------------------------------------------
+#--------------------------------------------------------------
+# Propensity Scores (using BART)
+ps_formula_rightside <- paste0("x_", 1:58, collapse = " + ")
+ps_formula <- paste0("z ~ ", formula_rightside) %>% as.formula
+
+p_scores_BART <- bart2(formula = ps_formula, data = data_train, keepTrees = TRUE, combineChains = TRUE)
+
+ps_hat <- colMeans(p_scores_BART$yhat.train)
 
 #--------------------------------------------------------------
 #--------------------------------------------------------------
@@ -217,6 +229,14 @@ prediction_ps_glm_control <-  predict(fit_ps_glm, newdata = data.frame(X[-train,
 ite_matrix_ps_glm <- prediction_ps_glm_treated - prediction_ps_glm_control
 
 results_test <- get_test_metrics(ite_matrix_ps_glm, "BART_ps_glm", results_test, ate_test, data_test$ite)
+
+#--------------------------------------------------------------
+#--------------------------------------------------------------
+# Bayesian Causal Forest
+X_matrix <- model.matrix(~ . - 1, data = X[train, ])
+
+fit_bcf <- bcf(y[train], z[train], X_matrix, X_matrix, pihat = fit_ps_BART$p.score, nburn = 2000, nsim = 5000)
+
 
 
 #--------------------------------------------------------------
