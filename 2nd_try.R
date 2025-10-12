@@ -1,15 +1,19 @@
-library(bartCause)
-library(dbarts)
-library(dplyr)
-library(MatchIt)
-library(grf)
-library(bcf)
+library(bartCause) # Causal BART
+library(dbarts) # General BART
+library(dplyr) 
+library(MatchIt) # Propensity Score Matching
+library(grf) # Causal Forests
+library(bcf) # Bayesian Causal Forests
+library(survey) # Weighting
+library(cobalt) # Balance diagnostics
+library(sandwich) # Adjust standard errors
+library(lmtest)
 
 # TODO Speichern in List über index aus Iteration
 n_iter <- 1
 
 # ---- Set up Ergebnisse speichern ----
-list_names <- c("BART_one_model", "BART_two_models", "BART_ps_BART", "BART_ps_glm")
+list_names <- c("BART_one_model", "BART_two_models", "BART_ps_BART", "BART_ps_glm", "causal_forest", "matching", "weighting")
 
 n_metrics <- length(list_names)
 template <- list()
@@ -47,7 +51,7 @@ results_test <- list(pehe_results_test = pehe_results_test,
 # ACIC 2016 datafiles
 
 X <- read.csv("C:\\Users\\luise\\Documents\\Masterarbeit\\data-ACIC-2016\\data\\x.csv")
-counterfactuals <- read.csv("C:\\Users\\luise\\Documents\\Masterarbeit\\data-ACIC-2016\\data_cf_all\\1\\zymu_13.csv")
+counterfactuals <- read.csv("C:\\Users\\luise\\Documents\\Masterarbeit\\data-ACIC-2016\\data_cf_all\\1\\zymu_336720322.csv")
 z <- counterfactuals$z
 y1 <- counterfactuals$y1
 y0 <- counterfactuals$y0
@@ -60,7 +64,7 @@ ate_complete <- mean(y1 - y0)
 
 # merge
 X[] <- lapply(X, function(x) if(is.character(x)) factor(x) else x)
-z <- as.factor(z)
+# z <- as.factor(z)
 df <- data.frame(X, z, y0, y1, y, ite)
 
 # How many treated & non-treated?
@@ -233,7 +237,7 @@ results_test <- get_test_metrics(ite_matrix_ps_glm, "BART_ps_glm", results_test,
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 # Bayesian Causal Forest
-X_matrix <- model.matrix(~ . - 1, data = X[train, ])
+X_matrix <- model.matrix(~ . - 1, data = X)
 
 fit_bcf <- bcf(y[train], z[train], X_matrix, X_matrix, pihat = fit_ps_BART$p.score, nburn = 2000, nsim = 5000)
 
@@ -241,19 +245,106 @@ fit_bcf <- bcf(y[train], z[train], X_matrix, X_matrix, pihat = fit_ps_BART$p.sco
 
 #--------------------------------------------------------------
 #--------------------------------------------------------------
-# Propensity Score Matching
+# Propensity Score Matching + Regression
+formula_rightside_ps <- paste0("x_", 1:58, collapse = " + ")
+ps_formula <- paste0("z ~ ", formula_rightside_ps) %>% as.formula
 
+# Nearest neighbor matching with logistic regression
+match_model <- matchit(ps_formula,
+                       data = data_train,
+                       method = "optimal",      
+                       distance = "logit")
+
+# Compute standardized mean differences
+smd_mean <- mean(smds$Balance$Diff.Adj)
+smd_max <- max(smds$Balance$Diff.Adj)
+smd_too_big <- sum(abs(smds$Balance$Diff.Adj) >= 0.1)
+
+matched_data <- match.data(match_model)
+
+match_regression_formula <- paste0("y ~ z + ", formula_rightside_ps) %>% as.formula
+
+fit_match_regression <- lm(match_regression_formula, matched_data)
+adjusted_se_matching <- vcovCL(fit_match_regression, cluster = ~ pair_id)
+
+coefs_match <- summary(fit_match_regression)$coef
+ate_match_train <- coefs_match["z", 1]
+se_match <- coefs_match["z", 2]
+
+results_train <- get_metrics_not_bart(results_train, "matching", ate_match_train, se_match, ate_train)
 
 #--------------------------------------------------------------
 #--------------------------------------------------------------
-# Lasso Regression
+# Weighting + Regression
 
+# Calculate Propensity scores
+fit_ps_scores <- glm(ps_formula, data = data_train, family = binomial)
+ps_scores_prediction <- predict(fit_ps_scores, type = "response")
+weights <- ifelse(data_train$z == 1, 1/ps_scores_prediction, 1/(1-ps_scores_prediction))
+
+# Check balance
+balance_measures <- bal.tab(ps_formula, 
+                   data = data_train, 
+                   weights = weights,  
+                   method = "weighting")
+print(balance_measures)
+
+# Compute standardized mean differences
+smd_mean_weighting <- mean(balance_measures$Balance$Diff.Adj)
+smd_max_weighting <- max(balance_measures$Balance$Diff.Adj)
+smd_too_big_weighting <- sum(abs(balance_measures$Balance$Diff.Adj) >= 0.1)
+
+love.plot(bal.tab)
+
+fit_weights_double_rob <- lm(match_regression_formula, data = data_train, weights = weights)
+# Adjust standard errors
+adjusted_se_weighting <- coeftest(fit_weights_double_rob, vcov = vcovHC(fit, type = "HC0")) 
+
+ate_weighting_train <- adjusted_se_weighting["z", 1]
+se_weighting <- adjusted_se_weighting["z", 2]
+
+results_train <- get_metrics_not_bart(results_train, "weighting", ate_weighting_train, se_weighting, ate_train)
 
 
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 # Causal forest
 
+fit_causal_forest <- causal_forest(X_matrix[train,], y[train], z[train])
+
+prediction_cf_test <- predict(fit_causal_forest, X_matrix[-train,], estimate.variance = TRUE)
+ite_cf_test <- prediction_cf_test$predictions
+
+# PEHE
+pehe_cf_test <- sqrt(mean((data_test$ite - ite_cf_test)^2))
+
+# Bias
+ate_cf_test <- mean(ite_cf_test)
+ate_bias_cf_test <- ate_test - ate_cf_test 
+
+# Confidence intervals
+var_tau <- prediction_cf_test$variance.estimates
+se_ate <- sqrt(sum(var_tau) / length(var_tau)^2)
+
+ci_lower_cf_test <- ate_cf_test - 1.96 * se_ate
+ci_upper_cf_test <- ate_cf_test + 1.96 * se_ate
+
+# CI length
+ci_length_cf_test <- ci_upper_cf_test - ci_lower_cf_test
+
+# Coverage
+is_covered_cf_test <- ci_lower_cf_test <= ate_test && ate_test <= ci_upper_cf_test
+
+# Save results
+results_train$pehe_results_train$BART_two_models[[length(results_train$pehe_results_train$BART_two_models) + 1]]  <- pehe_two_models_train
+results_train$ate_bias_results_train$BART_two_models[[length(results_train$ate_bias_results_train$BART_two_models) + 1]]  <- ate_bias_two_models_train
+results_train$ci_length_results_train$BART_two_models[[length(results_train$ci_length_results_train$BART_two_models) + 1]]  <- ci_length_two_models_train 
+results_train$coverage_results_train$BART_two_models[[length(results_train$coverage_results_train$BART_two_models) + 1]]  <- coverage_two_models_train
+
+results_test$pehe_results_test$causal_forest[[length(results_test$pehe_results_test$causal_forest) + 1]]  <- pehe_cf_test
+results_test$ate_bias_results_test$causal_forest[[length(results_test$ate_bias_results_test$causal_forest) + 1]]  <- ate_bias_cf_test
+results_test$ci_length_results_test$causal_forest[[length(results_test$ci_length_results_test$causal_forest) + 1]]  <- ci_length_cf_test
+results_test$coverage_results_test$causal_forest[[length(results_test$coverage_results_test$causal_forest) + 1]]  <- is_covered_cf_test
 
 
 
@@ -337,8 +428,51 @@ get_test_metrics <- function(ite_matrix, model_name, results_lists, true_ate, tr
   results_lists$coverage_results_test[[model_name]][[length(results_lists$coverage_results_test[[model_name]]) + 1]]  <- coverage_test
   
   return(results_lists)
-  
 }
+
+get_metrics_not_bart <- function(results_list, model_name, ate, se_ate, true_ate){
+  #ite_cf_test <- prediction_cf_test$predictions
+  
+  # PEHE
+  # pehe_cf_test <- sqrt(mean((data_test$ite - ite_cf_test)^2))
+  
+  # Bias
+  ate_bias <- true_ate - ate 
+  
+  # Confidence intervals
+  ci_lower <- ate_cf_test - 1.96 * se_ate
+  ci_upper <- ate_cf_test + 1.96 * se_ate
+  
+  # CI length
+  ci_length <- ci_upper - ci_lower
+  
+  # Coverage
+  is_covered <- ci_lower <= true_ate && true_ate <= ci_upper
+  
+  # Save results
+  # results_list$pehe_results_test[[model_name]][[length(results_lists$pehe_results_train[[model_name]]) + 1]]  <- pehe
+  results_list$ate_bias_results_train[[model_name]][[length(results_list$ate_bias_results_train[[model_name]]) + 1]]  <- ate_bias
+  results_list$ci_length_results_train[[model_name]][[length(results_list$ci_length_results_train[[model_name]]) + 1]]  <- ci_length 
+  results_list$coverage_results_train[[model_name]][[length(results_list$coverage_results_train[[model_name]]) + 1]]  <- is_covered
+
+  return(results_list)
+  }
+
+get_averages <- function(results_list){
+  
+  results_num <- lapply(results_list, function(metric) {
+    lapply(metric, function(method) unlist(method))
+  })
+  
+  avg_results <- lapply(results_num, function(metric) {
+    if (startsWith(metric, "coverage_results"))
+    sapply(metric, mean)   
+  })
+  
+  avg_results_df <- do.call(rbind, avg_results)
+  }
+  
+} 
 
 
 
