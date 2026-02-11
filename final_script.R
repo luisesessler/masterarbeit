@@ -1,54 +1,11 @@
-library(pacman)
-p_load(bartCause) # Causal BART
-p_load(dbarts) # General BART
-p_load(dplyr) 
-p_load(MatchIt) # Propensity Score Matching
-p_load(grf) # Causal Forests
-p_load(bcf) # Bayesian Causal Forests
-p_load(survey) # Weighting
-p_load(cobalt) # Balance diagnostics
-p_load(sandwich) # Adjust standard errors
-p_load(lmtest)
-p_load(optmatch)
+
 
 # TODO Speichern in List über index aus Iteration
 n_iter <- 10
 
-# ---- Set up Ergebnisse speichern ----
-list_names <- c("BART_one_model", "BART_two_models", "BART_ps_BART", 
-                "BART_ps_glm", "causal_forest", "matching", "weighting")
-
-n_metrics <- length(list_names)
-template <- list()
-
-pehe_results_train <- replicate(n_metrics, template, simplify = FALSE)
-ate_bias_results_train <- replicate(n_metrics, template, simplify = FALSE)
-ci_length_results_train <- replicate(n_metrics, template, simplify = FALSE)
-coverage_results_train <- replicate(n_metrics, template, simplify = FALSE)
-
-pehe_results_test <- replicate(n_metrics, template, simplify = FALSE)
-ate_bias_results_test <- replicate(n_metrics, template, simplify = FALSE)
-ci_length_results_test <- replicate(n_metrics, template, simplify = FALSE)
-coverage_results_test <- replicate(n_metrics, template, simplify = FALSE)
-
-names(pehe_results_train) <- list_names
-names(ate_bias_results_train) <- list_names
-names(ci_length_results_train) <- list_names
-names(coverage_results_train) <- list_names
-
-names(pehe_results_test) <- list_names
-names(ate_bias_results_test) <- list_names
-names(ci_length_results_test) <- list_names
-names(coverage_results_test) <- list_names
-
-results_train<- list(pehe_results_train = pehe_results_train, 
-                     ate_bias_results_train = ate_bias_results_train, 
-                     ci_length_results_train = ci_length_results_train, 
-                     coverage_results_train = coverage_results_train)
-results_test <- list(pehe_results_test = pehe_results_test, 
-                     ate_bias_results_test = ate_bias_results_test, 
-                     ci_length_results_test = ci_length_results_test, 
-                     coverage_results_test = coverage_results_test)
+# ---- Set up lists to save results (metrics) ----
+results_train <- make_results_list()
+results_test  <- make_results_list()
 
 # ---- Daten laden und vorbereiten ----
 
@@ -183,7 +140,8 @@ for (i in 1:n_iter){
   #--------------------------------------------------------------
   # BART with Propensity score as variable (using BART)
   
-  fit_ps_BART <- bartc(response = data$y, treatment = data$z, confounders = X, subset = train, method.rsp = "bart", method.trt = "bart",
+  fit_ps_BART <- bartc(response = data$y, treatment = data$z, confounders = X, subset = train, method.rsp = "bart", 
+                       method.trt = "bart",
                        estimand = "ate", keepTrees = TRUE)
   
   # For each observation in train, put them in both treatment and control  
@@ -475,15 +433,15 @@ get_averages <- function(results_list){
 #-------Generate Simulated Data----------------------------------------
 generate_data <-  function(linear) {
   # number of observations
-  n1 <- 100
+  n <- 100
   
   # 5 covariables
-  x1 <- rnorm(n1)
-  x2 <- rnorm(n1)
-  x3 <- rnorm(n1)
-  x4 <- rnorm(n1)
-  x5 <- runif(n1)
-  x6 <- rnorm(n1)
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  x3 <- rnorm(n)
+  x4 <- rnorm(n)
+  x5 <- runif(n)
+  x6 <- rnorm(n)
   
   # treatment effect
   tau <- 0.85
@@ -502,12 +460,15 @@ generate_data <-  function(linear) {
   # check how many got treatment
   mean(z)
   
-  # Linear
+  # Outcome models (linear vs. non-linear)
   lin_function <- 0.8 + 0.2 * x1 + 0.7 * x2 + 0.15 * x3 - 0.2 * x4 - 0.1 * x5 + 0.4 * x6
   non_lin_function <- 0.5 + 0.04 * x1^2 + 0.1 * x2 * x3 - 0.8 * sin(x4) 
   + log(x5 + 1) - 0.007 * x6^2
-  y_0 <- ifelse(linear, lin_function, non_lin_function) + rnorm(n1, 0, 0.5)
-  y_1 <- ifelse(linear, lin_function, non_lin_function) + tau + rnorm(n1, 0, 0.5)
+  
+  mu_0 <- ifelse(linear, lin_function, non_lin_function)
+  mu_1 <- mu0 + tau
+  y_0 <- mu_0 + rnorm(n, 0, 0.2)
+  y_1 <- mu_1 + rnorm(n, 0, 0.2)
   y <-  ifelse(z, y_1, y_0)
   ite <- y_1 - y_0
   

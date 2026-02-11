@@ -13,7 +13,8 @@ x3 <- rnorm(n, mean = 0, sd = 1)
 X <- data.frame(x1, x2, x3)
 
 # Treatment assignment model — moderate coefficients → good overlap
-logit_p <- 0.2 * x1 - 0.2 * x2 + 0.1 * x3
+# logit_p <- 0.2 * x1 - 0.2 * x2 + 0.1 * x3
+logit_p <- 0.8 * x1 - 0.7 * x2 + 0.6 * x3
 p_treat <- plogis(logit_p)  # Converts log-odds to probabilities (0–1)
 
 # Simulate treatment assignment
@@ -23,6 +24,10 @@ treat <- rbinom(n, 1, p_treat)
 hist(p_treat[treat == 1], col = rgb(1, 0, 0, 0.5), main = "Propensity Score Overlap", xlab = "Propensity Score", breaks = 20)
 hist(p_treat[treat == 0], col = rgb(0, 0, 1, 0.5), add = TRUE, breaks = 20)
 legend("topright", legend = c("Treated", "Control"), fill = c(rgb(1, 0, 0, 0.5), rgb(0, 0, 1, 0.5)))
+
+length(p_treat[treat == 1])
+length(p_treat[treat == 0])
+
 
 
 y1 <- 2 + 0.4 * 1 + 0.7 * x1 - 0.5 * x2 + 0.3 * x3 + rnorm(n)
@@ -49,11 +54,8 @@ data_test_sim <- df_sim[-train,]
 
 # BART
 z <- treat
-fit_ps_BART <- bartc(response = y, treatment = z, confounders = X, method.rsp = "bart", method.trt = "bart",
+fit_ps_BART <- bartc(response = y, treatment = z, confounders = X, subset = train, method.rsp = "bart", method.trt = "bart",
                      estimand = "ate", keepTrees = TRUE)
-
-sim_summary <- summary(fit_ps_BART)
-
 
 head(fit_ps_BART$mu.hat.obs)
 
@@ -100,7 +102,7 @@ pred_means_control <- colMeans(prediction_control)
 ite_two_models <- pred_means_treated - pred_means_control
 ate_two_models <- mean(ite_two_models)
 
-pehe_two_models <- sqrt(mean((data_test$ite - ite_two_models)^2))
+pehe_two_models <- sqrt(mean((data_test_sim$ite - ite_two_models)^2))
 
 
 # PS matching
