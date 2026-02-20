@@ -13,6 +13,7 @@ bart_one_model <- function(y, z, X, results, true_ate, testdata = X){
   predictions_control <- predict(bart_fit, testdata, type = "mu.0") 
   predictions_ite <- predictions_treated - predictions_control
   results <- get_metrics(predictions_ite, "BART_one_model", results, true_ate)
+  return(results)
 }
 
 bart_two_models <- function(y, z, X, results, true_ate, testdata = X){
@@ -63,8 +64,22 @@ bart_ps <- function(y, z, X, results, true_ate, trt_method, testdata = X){
   predictions_treated <- predict(bart_fit, testdata, type = "mu.1") 
   predictions_control <- predict(bart_fit, testdata, type = "mu.0") 
   predictions_ite <- predictions_treated - predictions_control
-  results_train <- get_metrics(predictions_ite, model_name, results, true_ate)
+  results <- get_metrics(predictions_ite, model_name, results, true_ate)
+  return(results)
 }
+
+bcf <- function(y, z, X, results, true_ate, p_scores, testdata = X){
+  X_mat <- as.matrix(X)
+  
+  bcf_fit <- bcf(y, z, X_mat, X_mat, p_scores, nburn = 500, nsim = 500)
+  
+  predictions_treated <- predict(bart_fit, testdata, type = "mu.1") 
+  predictions_control <- predict(bart_fit, testdata, type = "mu.0") 
+  predictions_ite <- predictions_treated - predictions_control
+  results <- get_metrics(predictions_ite, model_name, results, true_ate)
+  return(results)
+}
+
 
 # Propensity Score Matching + Regression
 matching_regression <- function(y, z, X, results, true_ate, testdata = X){

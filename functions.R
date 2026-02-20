@@ -1,22 +1,37 @@
 # Creates a list to save all the result metrics
 make_results_list <- function() {
+  
   list_names <- c(
     "BART_one_model", "BART_two_models", "BART_ps_bart",
     "BART_ps_glm", "causal_forest", "matching", "weighting"
   )
   
-  metrics <- c("ate_estimate", "pehe", "ate_bias", "ci_length", "coverage") #vlt ate löschen, eher zu Kontrollzwecken
+  metrics <- c(
+    "ate_estimate", "pehe", "ate_bias", "ci_length", "coverage"
+  )
   
   make_empty_metric <- function() {
     setNames(
-      replicate(length(list_names), list(), simplify = FALSE),
+      replicate(length(list_names), numeric(0), simplify = FALSE),
       list_names
     )
   }
   
   setNames(
-    lapply(metrics, \(x) make_empty_metric()),
+    lapply(metrics, function(x) make_empty_metric()),
     metrics
+  )
+}
+
+
+create_results_table <-  function(results){
+  return(data.frame(
+    model        = names(results$ate_estimate),
+    ate_estimate = sapply(results$ate_estimate, mean),
+    ate_bias     = sapply(results$ate_bias, mean),
+    ci_length    = sapply(results$ci_length, mean),
+    coverage     = sapply(results$coverage, mean)
+  )
   )
 }
 
@@ -101,7 +116,7 @@ get_metrics <- function(ite_matrix, model_name, results_list, true_ate){#, true_
   
   # ATE Bias
   ate_estimate <- mean(ite_estimates)
-  ate_bias <- true_ate - ate_estimate
+  ate_bias <- ate_estimate - true_ate
   
   # PEHE
   # pehe_test <- sqrt(mean((true_ites - ite_prediction)^2))
