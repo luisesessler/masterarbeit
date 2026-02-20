@@ -1,11 +1,11 @@
 # Creates a list to save all the result metrics
 make_results_list <- function() {
   list_names <- c(
-    "BART_one_model", "BART_two_models", "BART_ps_BART",
+    "BART_one_model", "BART_two_models", "BART_ps_bart",
     "BART_ps_glm", "causal_forest", "matching", "weighting"
   )
   
-  metrics <- c("pehe", "ate_bias", "ci_length", "coverage")
+  metrics <- c("ate_estimate", "pehe", "ate_bias", "ci_length", "coverage") #vlt ate löschen, eher zu Kontrollzwecken
   
   make_empty_metric <- function() {
     setNames(
@@ -117,6 +117,7 @@ get_metrics <- function(ite_matrix, model_name, results_list, true_ate){#, true_
                          true_ate <= credible_interval[2], 1, 0) %>% unname()
   
   # Save results
+  results_list$ate_estimate[[model_name]] <- c(results_list$ate_estimate[[model_name]], ate_estimate) #TODO: vlt löschen
   results_list$ate_bias[[model_name]] <- c(results_list$ate_bias[[model_name]], ate_bias)
   results_list$ci_length[[model_name]] <- c(results_list$ci_length[[model_name]], ci_length)
   results_list$coverage[[model_name]] <- c(results_list$coverage[[model_name]], is_covered)
@@ -124,9 +125,9 @@ get_metrics <- function(ite_matrix, model_name, results_list, true_ate){#, true_
   return(results_list)
 }
 
-get_metrics_not_bart <- function(results_list, model_name, ate_estimate, se_ate, ate_true){
+get_metrics_not_bart <- function(results_list, model_name, icate_estimates, ate_estimate, se_ate, ate_true){
   # PEHE
-  # pehe_cf_test <- sqrt(mean((data_test$ite - ite_cf_test)^2))
+  # pehe <- sqrt(mean((icate_estimates - )^2))
   
   # Bias
   ate_bias <- ate_true - ate_estimate

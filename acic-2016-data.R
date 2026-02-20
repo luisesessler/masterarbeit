@@ -15,7 +15,7 @@ for (i in 1:1){ # löschen
   
   # Iterates through all files in one folder
   #for (j in 1:length(file_paths)){
-  for (j in 1:1){ # löschen
+  for (j in 2:5){ # löschen
     df_zymu <- read.csv(file_paths[j])
     z <- df_zymu$z
     y_0 <- df_zymu$y0
@@ -24,8 +24,13 @@ for (i in 1:1){ # löschen
     mu_0 <- df_zymu$mu0
     mu_1 <- df_zymu$mu1
     
+    # TODO true_ate <- aus ATE file rauslesen
     sample_ate <- mean(mu_1 - mu_0)
+    true_ate <- sample_ate # TODO: löschen
     
-    bart_one_model(z, y, X, results_test, results_train, true_ate = sample_ate)
+    results_train <- bart_one_model(y, z, X, results_train, true_ate)
+    results_train <- bart_two_models(y, z, X, results_train, true_ate)
+    results_train <- bart_ps(y, z, X, results_train, true_ate, "bart")
+    results_train <- bart_ps(y, z, X, results_train, true_ate, "glm")
   }
 }
