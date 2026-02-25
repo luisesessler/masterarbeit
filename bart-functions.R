@@ -40,7 +40,7 @@ bart_two_models <- function(y, z, X, results, true_ate, testdata = X){
   # Calcuate ITEs
   predictions_ite <- predictions_treated - predictions_control
   
-  results_train <- get_metrics(predictions_ite,  "BART_two_models", results, true_ate)
+  # results_train <- get_metrics(predictions_ite,  "BART_two_models", results, true_ate)
   
   # Out of Sample prediction
   # Prediction for all units
@@ -51,6 +51,7 @@ bart_two_models <- function(y, z, X, results, true_ate, testdata = X){
   # predictions_ite <- predictions_treated - predictions_control
   
   results <- get_metrics(predictions_ite,  "BART_two_models", results, true_ate)
+  return(results)
 }
 
 
@@ -88,7 +89,9 @@ matching_regression <- function(y, z, X, results, true_ate, testdata = X){
   match_model <- matchit(ps_formula,
                          data = data.frame(X, z, y),
                          method = "optimal",      
-                         distance = "logit")
+                         distance = "logit",
+                         replacement = FALSE,
+                         ratio = 1)
   
   # Compute standardized mean differences
   # smd_mean <- mean(smds$Balance$Diff.Adj)
@@ -100,9 +103,8 @@ matching_regression <- function(y, z, X, results, true_ate, testdata = X){
   fit_match_regression <- lm(outcome_formula, matched_data)
   adjusted_se_matching <- vcovCL(fit_match_regression, cluster = ~ subclass)
   
-  coefs_match <- summary(fit_match_regression)$coef
-  ate_estimate <- coefs_match["z", 1]
-  se <- coefs_match["z", 2]
+  ate_estimate <- coef(fit_match_regression)["z"] %>% unname()
+  se <- sqrt(diag(adjusted_se_matching))["z"] %>% unname()
   
   results <- get_metrics_not_bart(results, "matching", ate_estimate, se, true_ate)
 }
@@ -110,10 +112,18 @@ matching_regression <- function(y, z, X, results, true_ate, testdata = X){
 weighting_regression <-  function(y, z, X, results, true_ate, newdata = X){
   data <- data.frame(X, z, y)
   # Calculate Propensity scores
-  # TODO gleich wie PS Matching?
   fit_ps_scores <- glm(ps_formula, data = data, family = binomial)
   ps_scores_prediction <- predict(fit_ps_scores, type = "response")
-  weights <- ifelse(z == 1, 1/ps_scores_prediction, 1/(1-ps_scores_prediction))
+ 
+  # Clip extreme PS
+  eps <- 1e-6
+  ps <- pmin(pmax(ps_scores_prediction, eps), 1 - eps)
+  
+  # Stabilized ATE weights
+  p_treat <- mean(z)
+  weights <- ifelse(z == 1,
+                    p_treat / ps,
+                    (1 - p_treat) / (1 - ps))
   
   # Check balance
   # balance_measures <- bal.tab(ps_formula, 
@@ -131,23 +141,26 @@ weighting_regression <-  function(y, z, X, results, true_ate, newdata = X){
   
   fit_weighting <- lm(outcome_formula, data = data, weights = weights)
   # Adjust standard errors
-  estimates_adjusted_se <- coeftest(fit_weighting, vcov = vcovHC(fit_weighting, type = "HC0")) 
+  est_robust_se <- coeftest(fit_weighting,
+                  vcov = vcovHC(fit_weighting, type = "HC0"))
   
-  ate_weighting <- estimates_adjusted_se["z", 1]
-  se_weighting <- estimates_adjusted_se["z", 2]
+  ate_est <- est_robust_se["z", 1]
+  se_ate  <- est_robust_se["z", 2]
   
-  results_train <- get_metrics_not_bart(results_train, "weighting", ate_weighting, se_weighting, ate_true = true_ate)
+  results <- get_metrics_not_bart(results, "weighting", ate_est, se_ate, ate_true = true_ate)
+  return(results)
 }
 
-causal_forest <- function(y, z, X, results, true_ate){
+estimate_causal_forest <- function(y, z, X, results, true_ate){
   X_mm <- model.matrix(~ . - 1, data = X)
-  fit_causal_forest <- causal_forest(X_mm, y, z)
+  fit_causal_forest <- causal_forest(X_mm, y, z, tune.parameters = "all")
   
   # testdata_mm <- model.matrix(~ . - 1, data = testdata)
   
   icate_predictions <- fit_causal_forest$predictions
-  ate_estimate <- average_treatment_effect(fit_causal_forest)[1]
-  se <- average_treatment_effect(fit_causal_forest)[2]
+  estimates <- average_treatment_effect(fit_causal_forest)
+  ate_estimate <- estimates[1] %>% unname() # TODO benennen!
+  se <- estimates[2] %>% unname()
 
   results <- get_metrics_not_bart(results, "causal_forest", icate_predictions, ate_estimate, se, true_ate)
 }

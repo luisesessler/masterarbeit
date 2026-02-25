@@ -7,17 +7,26 @@
 PATH_DATASETS <- "W:/Masterarbeit/Daten/"  
 PATH_TRUE_ATES <- "W:/Masterarbeit/Daten/trueATE/lowDim_trueATE.csv"  
 PATH_OVERVIEW <- "W:/Masterarbeit/Daten/trueATE/dgp_overview.csv" 
+PATH_RESULTS <- "W:/Masterarbeit/Results/" 
+
+# Read old results
+old_results <- readRDS(paste0(PATH_RESULTS, "2026-02-24_59-64u40_bart.RData"))
+old_summaries <- readRDS(paste0(PATH_RESULTS, "2026-02-24_57-64u40_bart_summary.RData"))
+
 
 
 dgpis <- read.csv(PATH_OVERVIEW)
 all_datasets <- read.csv(PATH_TRUE_ATES)
 cont_dgpis <- dgpis %>% filter(binary == 0)
 
-all_results <- list()
-all_summaries <- list()
+#all_results <- list()
+#all_summaries <- list()
+
+all_results <- old_results
+all_summaries <- old_summaries
 
 #for(i in 1:length(cont_dgpis)){
-for(i in 1:10){
+for(i in 1:3){
   dgp_index <- cont_dgpis$DGPid[i]
   true_ate <- cont_dgpis$trueATE[i]
   
@@ -44,11 +53,14 @@ for(i in 1:10){
     
     results <- bart_one_model(y, z, X, results, true_ate)
     results <- bart_ps(y, z, X, results, true_ate, "bart")
-    results <- bart_ps(y, z, X, results, true_ate, "glm")  
+    results <- bart_ps(y, z, X, results, true_ate, "glm") 
   }
   
   all_results[[paste0("dgp", dgp_index)]] <- results
   all_summaries[[paste0("dgp", dgp_index)]] <- create_results_table(results)
 }
+
+saveRDS(all_results$dgp31, paste0(PATH_RESULTS, "2026-02-25_31_BART.RData"))
+saveRDS(all_summaries$dgp31, paste0(PATH_RESULTS, "2026-02-25_31_BART_summaries.RData"))
 
 

@@ -140,7 +140,7 @@ get_metrics <- function(ite_matrix, model_name, results_list, true_ate){#, true_
   return(results_list)
 }
 
-get_metrics_not_bart <- function(results_list, model_name, icate_estimates, ate_estimate, se_ate, ate_true){
+get_metrics_not_bart <- function(results_list, model_name, ate_estimate, se_ate, ate_true){
   # PEHE
   # pehe <- sqrt(mean((icate_estimates - )^2))
   
@@ -158,6 +158,7 @@ get_metrics_not_bart <- function(results_list, model_name, icate_estimates, ate_
   is_covered <- ifelse(ci_lower <= ate_true && ate_true <= ci_upper, 1, 0)
   
   # Save results
+  results_list$ate_estimate[[model_name]] <- c(results_list$ate_estimate[[model_name]], ate_estimate) 
   results_list$ate_bias[[model_name]] <- c(results_list$ate_bias[[model_name]], ate_bias)
   results_list$ci_length[[model_name]] <- c(results_list$ci_length[[model_name]], ci_length)
   results_list$coverage[[model_name]] <- c(results_list$coverage[[model_name]], is_covered)
