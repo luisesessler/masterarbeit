@@ -3,6 +3,14 @@
 PATH_RESULTS <- "W:/Masterarbeit/Results/"
 PATH_OVERVIEW <-  "W:/Masterarbeit/Daten/trueATE/dgp_overview.csv"
 
+# S-Learner 29 und 30 sind im gleichen file
+s_29_30 <- readRDS(paste0(PATH_RESULTS, "2026-03-18_s-learner_29-30.RData"))
+
+saveRDS(s_29_30$dgp29, paste0(PATH_RESULTS, "2026-03-19_s-learner-29.RData"))
+saveRDS(s_29_30$dgp30, paste0(PATH_RESULTS, "2026-03-19_s-learner-30.RData"))
+
+
+
 dgpis <- read.csv(PATH_OVERVIEW)
 cont_dgpis <- dgpis %>% filter(binary == 0)
 
@@ -31,7 +39,7 @@ convert_to_df <- function(obj, dgp_id, model_name) {
 # for (i in 1:nrow(cont_dgpis)){
 results_list <- list()
 
-for (i in 16) {
+for (i in 1:16) {
   dgp_index <- cont_dgpis$DGPid[i]
   
   s_learner <- readRDS(paste0(PATH_RESULTS, "2026-03-19_s-learner-", dgp_index, ".RData"))
@@ -48,11 +56,12 @@ for (i in 16) {
 }
 
 final_df <- bind_rows(results_list)
+write.csv(final_df, paste0(PATH_RESULTS, "bart_results_new.csv"), row.names = FALSE)
 
 
 # nur rumspielen
 coverage_agg <- final_df %>% filter(metric == "coverage") %>%
-  group_by(model) %>%
+  group_by(model, dgp) %>%
   summarise(mean_coverage = mean(value))
 
 bias_agg <- final_df %>% filter(metric == "ate_bias") %>%
