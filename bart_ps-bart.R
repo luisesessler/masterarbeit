@@ -18,7 +18,8 @@ all_summaries <- list()
 
 set.seed(213)
 
-for(i in 1:3){
+#for(i in 1:length(cont_dgpis)){
+for(i in 5:6){
   dgp_index <- cont_dgpis$DGPid[i]
   true_ate <- cont_dgpis$trueATE[i]
   
@@ -34,11 +35,12 @@ for(i in 1:3){
     z <- data$A
     X <- data %>% select(starts_with("V"))
     
-    results <- bart_two_models_new(y, z, X, results, true_ate)
-    print(paste("DGP: ", i, ", Iteration: ", j))
+    results <- bart_ps_bart_new(y, z, X, results, true_ate)
+    print(paste("DGP: ", i, "Iteration:", j))
   }
-  saveRDS(results, paste0(PATH_RESULTS, "2026-03-19_t-learner_", dgp_index, ".RData"))
+  
   all_results[[paste0("dgp", dgp_index)]] <- results
+  saveRDS(results, paste0(PATH_RESULTS, "2026-03-19_ps-bart_",dgp_index,".RData"))
 }
 
-saveRDS(all_results, paste0(PATH_RESULTS, "2026-03-19_t-learner_dgps1-3.RData"))
+saveRDS(all_results, paste0(PATH_RESULTS, "2026-03-19_ps-bart_dgp5-6.RData"))

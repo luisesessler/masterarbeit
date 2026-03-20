@@ -66,7 +66,8 @@ bart_ps_bart_new <- function(y, z, X, results, true_ate, testdata = X){
   formula_mm <- colnames(X_mm) %>% paste0(collapse = " + ")
   ps_formula <- as.formula(paste0("z ~ ", formula_mm))
   
-  ps_fit <- bart2(formula = ps_formula, data = data_ps_mm, family = "binomial", keepTrees = TRUE, combineChains = TRUE)
+  ps_fit <- bart2(formula = ps_formula, data = data_ps_mm, keepTrees = TRUE, combineChains = TRUE,
+                  n.trees = 200, n.burn = 1000, n.samples = 1000, n.chains = 4)
   ps <- predict(ps_fit, data_ps_mm, type = "ev") %>% colMeans()
   
   data_mm <- data.frame(X_mm, ps, z, y)
@@ -74,7 +75,8 @@ bart_ps_bart_new <- function(y, z, X, results, true_ate, testdata = X){
   # TODO: das vlt auslagern, da auch für PS Matching genutzt wird
   bart_formula <- as.formula(paste0("y ~ z + ps + ", formula_mm))
   
-  bart_fit <- bart2(formula = bart_formula, data = data_mm, keepTrees = TRUE, combineChains = TRUE)
+  bart_fit <- bart2(formula = bart_formula, data = data_mm, keepTrees = TRUE, combineChains = TRUE,
+                    n.trees = 200, n.burn = 1000, n.samples = 2000, n.chains = 4)
   
   data_mm_treated <- data.frame(X_mm, ps = ps, z = 1)
   data_mm_control <- data.frame(X_mm, ps = ps, z = 0)
@@ -99,14 +101,14 @@ bart_ps_glm_new <- function(y, z, X, results, true_ate, testdata = X){
   ps_formula <- as.formula(paste0("z ~ ", formula_mm))
   
   ps_fit <- glm(formula = ps_formula, data = data_ps_mm, family = "binomial")
-  ps <- predict(ps_fit, data_ps_mm, type = "ev") %>% colMeans()
+  ps <- predict(ps_fit, data_ps_mm, type = "response")
   
   data_mm <- data.frame(X_mm, ps, z, y)
   
-  # TODO: das vlt auslagern, da auch für PS Matching genutzt wird
   bart_formula <- as.formula(paste0("y ~ z + ps + ", formula_mm))
   
-  bart_fit <- bart2(formula = bart_formula, data = data_mm, keepTrees = TRUE, combineChains = TRUE)
+  bart_fit <- bart2(formula = bart_formula, data = data_mm, keepTrees = TRUE, combineChains = TRUE,
+                    n.trees = 200, n.burn = 1000, n.samples = 2000, n.chains = 4)
   
   data_mm_treated <- data.frame(X_mm, ps = ps, z = 1)
   data_mm_control <- data.frame(X_mm, ps = ps, z = 0)
