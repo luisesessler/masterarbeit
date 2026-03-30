@@ -22,6 +22,23 @@ results_tuning <- list()
 
 dgps <- c(30) # For which DGPS do I tune?
 
+# BART PS-BART
+for (i in 1:length(dgps)){
+  dgp_index <- cont_dgpis$DGPid[i]
+  true_ate <- cont_dgpis$trueATE[i]
+  datasets_dgp <- all_datasets %>% filter(DGPid == dgp_index)
+  
+
+  # Create results dataframe
+  results <- data.frame(dgp = character(), 
+                        metric = character(), 
+                        model = character(), 
+                        iteration = numeric(),
+                        ntrees = numeric(),
+                        value = numeric())
+}
+
+
 # Matching
 for (i in 1:length(dgps)){
   df_tuning_results <- data.frame(dgp = NA,

@@ -3,7 +3,7 @@ library(tidyr)
 library(stringr)
 library(ggplot2)
 
-PATH_RESULTS <- "C:/Users/Amelie/Documents/Luise Masterarbeit/Results/"
+# PATH_RESULTS <- "C:/Users/Amelie/Documents/Luise Masterarbeit/Results/"
 results_bart <- read.csv(paste0(PATH_RESULTS, "bart_results_new.csv"))
 results_old <- read.csv(paste0(PATH_RESULTS, "results_dataframe_long_format_rmse.csv"))
 
