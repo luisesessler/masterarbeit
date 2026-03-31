@@ -18,8 +18,9 @@ bart_one_model <- function(y, z, X, results, true_ate, testdata = X){
 
 bart_two_models <- function(y, z, X, results, true_ate, testdata = X){
   X_mm <- model.matrix(~ . - 1, data = X)
+  X_df <- data.frame(X_mm)
   data_mm <- data.frame(X_mm, y)
-
+  
   treated <- data_mm[z == 1,]
   control <- data_mm[z == 0,]
   
@@ -29,26 +30,16 @@ bart_two_models <- function(y, z, X, results, true_ate, testdata = X){
   
   # bart2 muss genutzt werden, weil nur dort n.samples spezifizert werden kann
   # TODO: chains and samples erhöhen
-  bart_fit_treated <- bart2(formula = bart_formula, data = treated, keepTrees = TRUE, combineChains = TRUE)
-  bart_fit_control <- bart2(formula = bart_formula, data = control, keepTrees = TRUE, combineChains = TRUE)
+  bart_fit_treated <- bart2(formula = bart_formula, data = treated, keepTrees = TRUE, combineChains = TRUE, n.chains = 10)
+  bart_fit_control <- bart2(formula = bart_formula, data = control, keepTrees = TRUE, combineChains = TRUE, n.chains = 10)
   
   # In Sample prediction
   # Prediction for all units
-  predictions_treated <- predict(bart_fit_treated, newdata = data_mm, type = "ppd") 
-  predictions_control <- predict(bart_fit_control, newdata = data_mm, type = "ppd")
+  predictions_treated <- predict(bart_fit_treated, newdata = X_df, type = "ev") 
+  predictions_control <- predict(bart_fit_control, newdata = X_df, type = "ev")
   
   # Calcuate ITEs
   predictions_ite <- predictions_treated - predictions_control
-  
-  # results_train <- get_metrics(predictions_ite,  "BART_two_models", results, true_ate)
-  
-  # Out of Sample prediction
-  # Prediction for all units
-  # predictions_treated <- predict(bart_fit_treated, newdata = testdata, type = "ppd") 
-  # predictions_control <- predict(bart_fit_control, newdata = testdata, type = "ppd")
-  
-  # Calcuate ITEs
-  # predictions_ite <- predictions_treated - predictions_control
   
   results <- get_metrics(predictions_ite,  "BART_two_models", results, true_ate)
   return(results)

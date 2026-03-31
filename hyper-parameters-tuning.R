@@ -4,6 +4,10 @@ hyperparameter <- list(
   "matching" = c("treatment_mechanism", "outcome_formula",  )
 )
 
+
+# BART Hyperparameters
+
+
 hyper_bart <- expand.grid(
   ntrees = c()
 )

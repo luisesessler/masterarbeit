@@ -42,10 +42,8 @@ bart_two_models_new <- function(y, z, X, results, true_ate, testdata = X){
   
   # bart2 muss genutzt werden, weil nur dort n.samples spezifizert werden kann
   # TODO: chains and samples erhöhen
-  bart_fit_treated <- bart2(formula = bart_formula, data = treated, keepTrees = TRUE, combineChains = TRUE,
-                            n.trees = 200, n.burn = 1000, n.samples = 2000, n.chains = 4)
-  bart_fit_control <- bart2(formula = bart_formula, data = control, keepTrees = TRUE, combineChains = TRUE,
-                            n.trees = 200, n.burn = 1000, n.samples = 2000, n.chains = 4)
+  bart_fit_treated <- bart2(formula = bart_formula, data = treated, keepTrees = TRUE, combineChains = TRUE, n.chains = 10)
+  bart_fit_control <- bart2(formula = bart_formula, data = control, keepTrees = TRUE, combineChains = TRUE, n.chains = 10)
   
   # In Sample prediction
   # Prediction for all units
