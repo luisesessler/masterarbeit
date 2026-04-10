@@ -11,3 +11,7 @@ p_load(sandwich) # Adjust standard errors
 p_load(lmtest)
 p_load(optmatch)
 p_load(tidyverse)
+p_load(ggplot2)
+p_load(purrr)
+p_load(tidyr)
+p_load(ggbeeswarm)
