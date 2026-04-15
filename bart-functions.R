@@ -107,7 +107,7 @@ weighting_regression <-  function(y, z, X, results, true_ate, newdata = X){
   ps_scores_prediction <- predict(fit_ps_scores, type = "response")
  
   # Clip extreme PS
-  eps <- 1e-6
+  eps <- 0.1
   ps <- pmin(pmax(ps_scores_prediction, eps), 1 - eps)
   
   # Stabilized ATE weights
