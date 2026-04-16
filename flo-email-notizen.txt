@@ -1,0 +1,53 @@
+10 Iterations of each dataset -> ich würde also vmtl. nicht 100 nehmen, sondern weniger
+
+Jedes Dataset wird in test und Train geteilt
+
+Jedes Training set wird in 10 cross-validation folds geteilt
+
+
+
+
+
+
+
+
+C: Meta-Learner
+B: Base-Learners
+H: Hyperparameters
+
+
+
+Model selection metrics sind etwas anderes als model Evaluation metrics!
+Model selection: beim Tuning verwendet
+Model Evaluation: dann um zu schauen, ob "bestes" Model tatsächlich gute Ergebnisse liefert
+
+
+
+
+Ich will dann am Ende:
+für jedes Modell die beste Hyperparameter Kombination
+
+
+
+
+
+
+
+
+
+
+Hallo Flo,
+
+ich wollte gerne nochmal das Setup fürs Hyperparameter Tuning mit dir absprechen.
+Dafür würde ich gerne folgende Hyperparameter tunen: …
+
+Damit die Rechenzeit nicht zu hoch wird, 
+
+
+
+Auch wenn bei dem ersten "einfachen" Vergleich der Parameter
+
+Beim Vorgehen orientiere ich mich an X. 
+Ich würde folgendermaßen vorgehen:
+1. Datensatz in Tr
+
