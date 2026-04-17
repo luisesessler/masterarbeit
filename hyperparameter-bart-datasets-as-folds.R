@@ -37,10 +37,22 @@ for (i in dgps) {
   true_ate <- cont_dgpis$trueATE[i]
   datasets_dgp <- all_datasets %>% filter(DGPid == dgp_index)
   
+  n <- 10
+  results_list <- vector("list", n)
+  
+  for (i in 1:n) {
+    results_list[[i]] <- data.frame(
+      id = i,
+      value = rnorm(5)
+    )
+  }
+  
   for (j in 1:10) { #Datensätze
     file_name <- datasets_dgp[j, "filename"]
     data <- read.csv(paste0(PATH_DATASETS, file_name, ".csv"))
-
+    
+    dataset_folds <- 
+    
     # In training und test data set splitten
     # TODO: vlt mache ich das doch nicht? Mal sehen
     #train_indices <- sample(nrow(data), nrow(data)*0.7, replace = FALSE) #TODO: Prozent bestimmen
@@ -50,13 +62,13 @@ for (i in dgps) {
     tuning_data <- data
     
     # Split dataset into 10 folds
-    k <- 10 #TODO: Größe der Datensätze checken, evtl runter, wenn folds dann sonst zu klein werden 
-    fold_ids <- rep(NA, nrow(tuning_data))
+    #k <- 10 #TODO: Größe der Datensätze checken, evtl runter, wenn folds dann sonst zu klein werden 
+    #fold_ids <- rep(NA, nrow(tuning_data))
     
-    for (treatment in 0:1) {
-      idx <- which(tuning_data$A == treatment)
-      fold_ids[idx] <- sample(rep(1:k, length.out = length(idx)))
-    }
+    #for (treatment in 0:1) {
+      #idx <- which(tuning_data$A == treatment)
+     # fold_ids[idx] <- sample(rep(1:k, length.out = length(idx)))
+    #}
     
     for (fold in 1:K){ # k-folds
       train_data <- tuning_data[fold_ids != fold,] 
@@ -79,7 +91,7 @@ for (i in dgps) {
         
         all_tuning_results <- rbind(all_tuning_results, data.frame(
           dgp = paste0("dgp", i),
-          metric = mse,
+          metric = "mse",
           model = "bart_s-learner",
           data_idx = j,
           fold_idx = k,
