@@ -15,3 +15,6 @@ p_load(ggplot2)
 p_load(purrr)
 p_load(tidyr)
 p_load(ggbeeswarm)
+p_load(coda)
+p_load(plotBart)
+

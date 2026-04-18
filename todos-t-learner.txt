@@ -1,0 +1,26 @@
+Why does T-Learner have bad results?
+DGPs (big difference to S-Learners):  
+30, 37, 40, 
+
+A Little bit worse: 29, 38, 62, 63
+
+imbalanced datasets -> 37, 38 (not even 100 observations to learn from)
+
+
+29:
+30:
+37: imbalanced + few observations
+38: imbalanced + few observations
+40:
+62:
+63:
+
+
+
+
+
+
+
+TODOS Code aufräumen:
+- überall cont_gp_overview einlesen und nicht dgp_overview
+   --> variable gps nennen, nicht dgpis

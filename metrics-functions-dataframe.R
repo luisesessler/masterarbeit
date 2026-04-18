@@ -1,7 +1,7 @@
-bart_s_learner <- function(y, z, X, true_ate, testdata = X){
+bart_s_learner <- function(y, z, X, n_samples = 1000, n_chains = 5, true_ate, testdata = X){
   
   bart_fit <- bartc(response = y, treatment = z, confounders = X, # subset = train, 
-                    method.rsp = "bart", method.trt = "none",
+                    method.rsp = "bart", method.trt = "none", n.samples = n_samples, n.chains = n_chains,
                     estimand = "ate", keepTrees = TRUE, p.scoreAsCovariate = FALSE)
   
   #----
@@ -37,12 +37,11 @@ get_metrics <- function(ite_matrix,  results_list, true_ate){#, true_ites) {
                          true_ate <= credible_interval[2], 1, 0) %>% unname()
   
   # Save results
-  metrics <- data.frame(
+  metrics <- c(
     ate_estimate = ate_estimate,
     ate_bias = ate_bias,
     ci_length = ci_length,
     is_covered = is_covered
   )
-
   return(metrics)
 }
