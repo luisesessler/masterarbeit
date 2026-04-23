@@ -1,0 +1,52 @@
+Why bad results?
+
+- 40: bad overlap
+- 39: bad overlap
+- 37: unbalanced
+- 38: unbalanced
+- 30: probably complex non-linear treatement assignment
+
+- 29:
+- 60:
+- 64:
+
+
+
+
+
+
+
+
+
+TODO:
+- Neue Weighting (Basic) Daten mit restlichen Methoden vereinen -> neue Plots
+- Step 2 beim Hyperparameter Tuning BART
+- Causal Forest Tuning Setup, 1 Schritt laufen lassen
+- 3. DGP auswählen
+- Mal alle beste Methoden vergleichen
+
+
+
+Fragen Flo:
+- Overlap mit SD1 discard rule -> andere ruleas auch noch testen?
+- Weighting "Tuning": Model selection? Sehr viele Möglichkeiten
+- Normalized RMSE
+
+
+
+- Tuning:
+-- Parameter Wahl
+-- 2 Step Approach
+-- Nur mit 20 Datasets/3DGPS
+
+
+
+
+Text:
+
+Auswahl DGPs für Hyperparameter Tuning:
+- 30: schlechteste average Coverage (nur PS-Bart gut)
+- 60: alle ca. bei 90% Coverage, T-Learner besser
+
+
+PS-BART Tuning: Parameter (k, n.trees, df, nu) werden auch für PS Estimation Method gesetzt
