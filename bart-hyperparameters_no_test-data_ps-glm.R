@@ -14,11 +14,16 @@ all_datasets <- read.csv(PATH_TRUE_ATES)
 
 set.seed(213)
 
-hyper_bart <- expand.grid(
-  k = c(1, 2, 3, 5),
-  n_trees = c(75, 100, 200)
-)
+sigma_params <- list(c(3, 0.99), c(10, 0.75)) # c(3, 0.90) add back!!)
+k_vals <- c(1, 2, 3, 5)
+n_trees_vals <- c(75, 100, 200)
 
+hyper_bart <- expand.grid(idx = 1:2, k = k_vals, n_trees = n_trees_vals)
+
+hyper_bart$nu <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][1])
+hyper_bart$q  <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][2])
+
+hyper_bart$idx <- NULL
 
 df_tuning_results <- data.frame(
   dgp = character(),
@@ -27,56 +32,62 @@ df_tuning_results <- data.frame(
   iteration = numeric(),
   k = numeric(),
   n_trees = numeric(),
+  nu = numeric(),
+  q = numeric(),
   value = numeric()
 )
 
 dgp_test <- c(12)
 
 
-for(i in 2){
+for(i in 12){
   dgp_index <- dgps$DGPid[i]
   true_ate <- dgps$trueATE[i]
   datasets_dgp <- all_datasets %>% filter(DGPid == dgp_index)
   
   #for (j in 1:nrow(datasets_dgp)){
-  for (j in 1:10){
+  for (j in 1:20){
     for (l in 1:nrow(hyper_bart)){
-    hyperparams <- hyper_bart[l,]
-    
-    file_name <- datasets_dgp[j, "filename"]
-    data <- read.csv(paste0(PATH_DATASETS, file_name, ".csv"))
-    y <- data$Y
-    z <- data$A
-    X <- data %>% select(starts_with("V"))
-    
-    metrics_run <- bart_s_learner(y, z, X, k = hyperparams$k, n_trees = hyperparams$n_trees, true_ate = true_ate,
-                                  method_trt = "glm", ps_as_covariate = TRUE
-                                  )
-    
-    df_tuning_results <- rbind(df_tuning_results, data.frame(
-      dgp = rep(paste0("dgp", dgp_index), 4),
-      metric = c("ate_estimate", "ate_bias", "ci_length", "coverage"),
-      model = rep("bart_ps-glm", 4),
-      iteration =  rep(j, 4),
-      k = rep(hyperparams$k, 4),
-      n_trees = rep(hyperparams$n_trees, 4),
-      value = metrics_run
-    )
-    )
-    
-    print(paste("dgp:", i, "iteration:", j, "k:", hyperparams$k, "n.trees:", hyperparams$n_trees))
+      hyperparams <- hyper_bart[l,]
+      
+      file_name <- datasets_dgp[j, "filename"]
+      data <- read.csv(paste0(PATH_DATASETS, file_name, ".csv"))
+      y <- data$Y
+      z <- data$A
+      X <- data %>% select(starts_with("V"))
+      
+      metrics_run <- bart_s_learner(y, z, X, ps_as_covariate = TRUE, method_trt = "glm",
+                                    k = hyperparams$k, n_trees = hyperparams$n_trees, 
+                                    nu = hyperparams$nu, q = hyperparams$q,
+                                    true_ate = true_ate)
+      
+      df_tuning_results <- rbind(df_tuning_results, data.frame(
+        dgp = rep(paste0("dgp", dgp_index), 4),
+        metric = c("ate_estimate", "ate_bias", "ci_length", "coverage"),
+        model = rep("bart_ps-glm", 4),
+        iteration =  rep(j, 4),
+        k = rep(hyperparams$k, 4),
+        n_trees = rep(hyperparams$n_trees, 4),
+        nu =  rep(hyperparams$nu, 4),
+        q =  rep(hyperparams$q, 4),
+        value = metrics_run
+      )
+      )
+      
+      print(paste("dgp:", i, "iteration:", j, "hyperparams:", l))
+    }
   }
-  }
-  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-21_tuning_NO-CV_dgp30_ps-glm_1-10.csv"))
+  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-28_tuning_NO-CV_dgp60_ps-glm_sigma", j,".csv"))
 }
 
-
-bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covariate = FALSE, k, n_trees, testdata = X){
+bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covariate = FALSE, 
+                           k, n_trees, nu, q, testdata = X){
   bart_fit <- bartc(response = y, treatment = z, confounders = X,
                     method.rsp = "bart", method.trt = method_trt, 
                     estimand = "ate", keepTrees = TRUE, 
                     p.scoreAsCovariate = ps_as_covariate,
-                    n.trees = n_trees, k = k)
+                    n.trees = n_trees, k = k,
+                    sigdf = nu, sigquant = q)
   
   #----
   # In sample metrics
@@ -87,36 +98,6 @@ bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covaria
   results_run <- get_metrics(predictions_ite, true_ate)
   return(results_run)
 }
-
-bart_t_learner <- function(y, z, X, true_ate, testdata = X){
-  X_mm <- model.matrix(~ . - 1, data = X)
-  X_df <- data.frame(X_mm)
-  data_mm <- data.frame(X_mm, y)
-  
-  treated <- data_mm[z == 1,]
-  control <- data_mm[z == 0,]
-  
-  # TODO: das vlt auslagern, da auch für PS Matching genutzt wird
-  formula_mm <- colnames(X_mm) %>% paste0(collapse = " + ")
-  bart_formula <- as.formula(paste0("y ~ ", formula_mm))
-  
-  # bart2 muss genutzt werden, weil nur dort n.samples spezifizert werden kann
-  # TODO: chains and samples erhöhen
-  bart_fit_treated <- bart2(formula = bart_formula, data = treated, keepTrees = TRUE, combineChains = TRUE, n.chains = n_chains, n.samples = n_samples)
-  bart_fit_control <- bart2(formula = bart_formula, data = control, keepTrees = TRUE, combineChains = TRUE, n.chains = n_chains, n.samples = n_samples)
-  
-  # In Sample prediction
-  # Prediction for all units
-  predictions_treated <- predict(bart_fit_treated, newdata = X_df, type = "ev") 
-  predictions_control <- predict(bart_fit_control, newdata = X_df, type = "ev")
-  
-  # Calcuate ITEs
-  predictions_ite <- predictions_treated - predictions_control
-  
-  results_run <- get_metrics(predictions_ite, true_ate)
-  return(results_run)
-}
-
 
 get_metrics <- function(ite_matrix, true_ate){ 
   # Mean ITE for each observation

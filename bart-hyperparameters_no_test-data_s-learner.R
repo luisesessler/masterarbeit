@@ -14,11 +14,16 @@ all_datasets <- read.csv(PATH_TRUE_ATES)
 
 set.seed(213)
 
-hyper_bart <- expand.grid(
-  k = c(1, 2, 3, 5),
-  n_trees = c(75, 100, 200)
-)
+sigma_params <- list(c(3, 0.99), c(10, 0.75)) # c(3, 0.90) add back!!)
+k_vals <- c(1, 2, 3, 5)
+n_trees_vals <- c(75, 100, 200)
 
+hyper_bart <- expand.grid(idx = 1:2, k = k_vals, n_trees = n_trees_vals)
+
+hyper_bart$nu <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][1])
+hyper_bart$q  <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][2])
+
+hyper_bart$idx <- NULL
 
 df_tuning_results <- data.frame(
   dgp = character(),
@@ -27,6 +32,8 @@ df_tuning_results <- data.frame(
   iteration = numeric(),
   k = numeric(),
   n_trees = numeric(),
+  nu = numeric(),
+  q = numeric(),
   value = numeric()
 )
 
@@ -39,7 +46,7 @@ for(i in 12){
   datasets_dgp <- all_datasets %>% filter(DGPid == dgp_index)
   
   #for (j in 1:nrow(datasets_dgp)){
-  for (j in 1:20){
+  for (j in 1:1){
     for (l in 1:nrow(hyper_bart)){
     hyperparams <- hyper_bart[l,]
     
@@ -49,7 +56,9 @@ for(i in 12){
     z <- data$A
     X <- data %>% select(starts_with("V"))
     
-    metrics_run <- bart_s_learner(y, z, X, k = hyperparams$k, n_trees = hyperparams$n_trees, true_ate = true_ate)
+    metrics_run <- bart_s_learner(y, z, X, k = hyperparams$k, n_trees = hyperparams$n_trees, 
+                                  nu = hyperparams$nu, q = hyperparams$q,
+                                  true_ate = true_ate)
     
     df_tuning_results <- rbind(df_tuning_results, data.frame(
       dgp = rep(paste0("dgp", dgp_index), 4),
@@ -58,6 +67,8 @@ for(i in 12){
       iteration =  rep(j, 4),
       k = rep(hyperparams$k, 4),
       n_trees = rep(hyperparams$n_trees, 4),
+      nu =  rep(hyperparams$nu, 4),
+      q =  rep(hyperparams$q, 4),
       value = metrics_run
     )
     )
@@ -66,17 +77,18 @@ for(i in 12){
   }
   }
   
-  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-21_tuning_NO-CV_dgp60_s-learner.csv"))
+  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-28_tuning_NO-CV_dgp60_s-learner_sigma", j,".csv"))
   
 }
 
-
-bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covariate = FALSE, k, n_trees, testdata = X){
+bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covariate = FALSE, 
+                           k, n_trees, nu, q, testdata = X){
   bart_fit <- bartc(response = y, treatment = z, confounders = X,
                     method.rsp = "bart", method.trt = method_trt, 
                     estimand = "ate", keepTrees = TRUE, 
                     p.scoreAsCovariate = ps_as_covariate,
-                    n.trees = n_trees, k = k)
+                    n.trees = n_trees, k = k,
+                    sigdf = nu, sigquant = q)
   
   #----
   # In sample metrics
