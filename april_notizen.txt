@@ -2,13 +2,18 @@ Why bad results?
 
 - 40: bad overlap
 - 39: bad overlap
-- 37: unbalanced
+- 37: unbalanced + poor overlap (aber vmtl. durch unbalanciertheit entstanden)
 - 38: unbalanced
 - 30: probably complex non-linear treatement assignment
 
-- 29:
+- 29: might have non-linear treatment assignment (PS-BART better than PS-GLM and s-Learner)
 - 60:
-- 64:
+- 64: non-linear Outcome mechanism? -> checken, ob PS mit PART Verbesserung bringt -> ja!
+
+
+
+Welche sind wsl heteogen?
+32, 39, 40, 60, 64
 
 
 
@@ -19,18 +24,26 @@ Why bad results?
 
 
 TODO:
-- Neue Weighting (Basic) Daten mit restlichen Methoden vereinen -> neue Plots
-- Step 2 beim Hyperparameter Tuning BART
-- Causal Forest Tuning Setup, 1 Schritt laufen lassen
-- 3. DGP auswählen
-- Mal alle beste Methoden vergleichen
+- neue Plots erstellen (neues IPTW)
+- RMSE/CI normalisieren: mit SD(Y) und true ATE -> vergleichen
+- nochmal neue averages berechnen für normalisierte Werte
+
+- Heterogenität checken: S-Learner: Varianz der ITEs untereinander
+
+- vlt nochmal CF laufen lassen und checken?
+
+
+Für alle getunten DGPS:
+- Plots erstellen für Metrics (default vs. getuned) 
 
 
 
 Fragen Flo:
-- Overlap mit SD1 discard rule -> andere ruleas auch noch testen?
+- Overlap mit SD1 discard rule -> andere rules auch noch testen?
 - Weighting "Tuning": Model selection? Sehr viele Möglichkeiten
-- Normalized RMSE
+- sollte ich lieber absolute bias berichten? In RMSE ist ja auch Varianz drinne
+- Normalized RMSE/Bias -> welche Metrics?
+- bei IPTW nur PS Methode geändert, sonst keine Model selection
 
 
 
@@ -44,9 +57,68 @@ Fragen Flo:
 
 Text:
 
+- bei dataset description: wie viele covariates sind numeric, wie viele categorical
+
 Auswahl DGPs für Hyperparameter Tuning:
 - 30: schlechteste average Coverage (nur PS-Bart gut)
 - 60: alle ca. bei 90% Coverage, T-Learner besser
 
 
 PS-BART Tuning: Parameter (k, n.trees, df, nu) werden auch für PS Estimation Method gesetzt
+
+
+
+Warum Auswahl der drei DGPs für Tuning?
+-> nicht die DGPs mit schlechtesten Ergebnissen, sondern wo es die größten Unterschiede zwischen Modellen gibt
+
+-> 30: niedrigste Coverage im Allgemeinen, große Unterschiede zwischen RMSE S-Learnern und Rest -> Chance für andere
+-> 60: IPTW & T-Learner niedrigster Bias -> Chance für S-Learner 
+-> 40: S_learner am besten -> Chance für andere, weniger Observations 
+-> 63: Bias höher von S-Learnern als CF und T -> Chance für S-Learner
+
+
+Wo sind  BART Learner schlechter als andere?
+-> 60, 63, 37 (aber unbalanced), 
+
+Wo andersrum große Unterschiede?
+40
+
+
+Alpha, Beta:
+bei DGP 60:
+Beta: 1,3,4 -> Results worsens, 1.5,2,2.5 alle relativ ähnlich
+Alpha: 0.7, 08 -> worsens, 0.9, .95, 0.99 alle relativ ähnlich
+
+-> defaults scheinen gut zu sein
+
+bei DGP30:
+
+
+
+Was habe ich gemacht?
+- RMSE/CIs normalisiert
+
+
+- Versucht zu identifizieren, warum manche DGPS schlechter performen
+-> Balance
+-> Overlap: 2 PS Methoden, BART-Methode
+-> für BART Methode geschaut, ob sich Ergebnisse verbessern (TODO nachschauen, wie genau ich das gemacht hab: wie viele Iterationen? Nur eine?)
+
+
+
+Tuning:
+- 3 DGPS rausgesucht, auf jeweils 20 Datensätzen getuned
+Folgende Parameter getuned:
+- BART: ntrees, k, sigdf, sigquant
+- Causal forest: min_leaf_size, sample_fraction, mtry
+- IPTW: PS mit BART geschätzt
+
+- jeweils die Kombination mit dem niedrigsten RMSE rausgesucht (außer IPTW, da gibt's ja nur ein anderes Ergebnis)
+-> Unterschiede zwischen Metrics gechekct bzw geplottet (Wichtig: nur für die ersten 20 Beobachtungen) -> FRAGE: Okay so? Ergebnisse sind dann marginal anders als bei 100 Iterationen
+
+DGP60: keine großen Unterschiede
+-> alle models werden ein kleines bisschen besser, aber wirklich marginal
+-> nur S-Learner und PS-GLM werden ein bisschen besser (RMSE um 0.006, Coverage um 5%)
+
+DGP30:
+- bei RMSE gibt es switch:
