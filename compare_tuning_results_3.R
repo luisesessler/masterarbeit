@@ -21,6 +21,8 @@ df_rmse_bart <- tuning_results_60_bart %>% filter(metric == "ate_bias") %>%
     .groups = "drop"
   )
 
+ps_bart <- df_rmse_bart %>% filter(model == "bart_ps-bart")
+
 df_rmse_cf <- tuning_results_60_cf %>% filter(metric == "ate_bias") %>%
   group_by(model, min_node_size, sample_fraction, mtry) %>%
   summarise(
@@ -42,15 +44,15 @@ default_cf <- df_rmse_cf %>% filter(min_node_size == 5, sample_fraction == 0.5, 
 default_iptw <- df_rmse_iptw %>% filter(ps_model == "linear_basic")
 
 df_comparison_rmse <- data.frame(model = character(),
-           default = character(),
-           rmse = numeric())
+                                 default = character(),
+                                 rmse = numeric())
 
 # Add all defaults to DF
 
 df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
-                            model = default_bart$model,
-                            default = "default",
-                            rmse = default_bart$rmse))
+  model = default_bart$model,
+  default = "default",
+  rmse = default_bart$rmse))
 
 
 df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
@@ -183,34 +185,91 @@ ggplot(df_comparison_cov, aes(x = default, y = coverage, col = model)) +
   theme(legend.position = "top") +
   scale_color_brewer(palette = "Dark2")
 
+write.csv(df_comparison_cov, paste0(PATH_RESULTS, "2026-04-29_tuning_coverage"))
 
 
+#-----CI Length
+df_ci_bart <- tuning_results_60_bart %>%
+  filter(metric == "ci_length") %>%
+  group_by(model, dgp, k, n_trees, nu, q) %>%
+  summarise(
+    ci_length = mean(value),
+    .groups = "drop"
+  )
+
+df_ci_cf <- tuning_results_60_cf %>%
+  filter(metric == "ci_length") %>%
+  group_by(model, min_node_size, sample_fraction, mtry) %>%
+  summarise(
+    ci_length = mean(value),
+    .groups = "drop"
+  )
+
+df_ci_iptw <- tuning_results_60_iptw %>%
+  filter(metric == "ci_length") %>%
+  group_by(model, ps_model) %>%
+  summarise(
+    ci_length = mean(value),
+    .groups = "drop"
+  )
+
+best_ci_bart <- df_ci_bart %>%
+  inner_join(best_rmse_bart,
+             by = c("model", "dgp", "k", "n_trees", "nu", "q"))
+
+best_ci_cf <- df_ci_cf %>%
+  inner_join(best_rmse_cf,
+             by = c("model", "min_node_size", "sample_fraction", "mtry"))
+
+best_ci_iptw <- df_ci_iptw %>%
+  inner_join(bart_iptw,
+             by = c("model", "ps_model"))
+
+default_ci_bart <- df_ci_bart %>%
+  filter(k == 2, n_trees == 75, nu == 3, q == 0.9)
+
+default_ci_cf <- df_ci_cf %>%
+  filter(min_node_size == 5, sample_fraction == 0.5, mtry == 26)
+
+default_ci_iptw <- df_ci_iptw %>%
+  filter(ps_model == "linear_basic")
+
+df_summary_dgp30 <- bind_rows(
+  
+  # -------- BART DEFAULT --------
+  default_bart %>%
+    mutate(setting = "default",
+           ci_length = default_ci_bart$ci_length),
+  
+  # -------- BART TUNED --------
+  best_rmse_bart %>%
+    left_join(best_cov_bart, by = c("model", "dgp", "k", "n_trees", "nu", "q")) %>%
+    left_join(best_ci_bart, by = c("model", "dgp", "k", "n_trees", "nu", "q")) %>%
+    mutate(setting = "tuned"),
+  
+  # -------- CF DEFAULT --------
+  default_cf %>%
+    mutate(setting = "default",
+           ci_length = default_ci_cf$ci_length),
+  
+  # -------- CF TUNED --------
+  best_rmse_cf %>%
+    left_join(best_cov_cf, by = c("model", "min_node_size", "sample_fraction", "mtry")) %>%
+    left_join(best_ci_cf, by = c("model", "min_node_size", "sample_fraction", "mtry")) %>%
+    mutate(setting = "tuned"),
+  
+  # -------- IPTW DEFAULT --------
+  default_iptw %>%
+    mutate(setting = "default",
+           ci_length = default_ci_iptw$ci_length),
+  
+  # -------- IPTW TUNED --------
+  bart_iptw %>%
+    left_join(best_cov_iptw, by = c("model", "ps_model")) %>%
+    left_join(best_ci_iptw, by = c("model", "ps_model")) %>%
+    mutate(setting = "tuned")
+)
 
 
+# DGP 60
 
-
-
-
-
-
-
-
-tuning_60_s_learner <- tuning_result_60s %>% filter(model == "bart_s-learner")
-tuning_60_t_learner <- tuning_result_60s %>% filter(model == "bart_t-learner")
-tuning_60_ps_bart <- tuning_result_60s %>% filter(model == "bart_ps-bart")
-tuning_60_ps_glm <- tuning_result_60s %>% filter(model == "bart_ps-glm")
-
-
-
-
-
-summaries <- tuning_results %>% group_by(model, metric, k, n_trees, nu, q) %>%
-  summarise(mean_value = mean(abs(value)))
-
-summaries_s_learner <- summaries %>% filter(model == "bart_s-learner")
-
-summaries_t_learner <- summaries %>% filter(model == "bart_t-learner")
-
-summaries_ps_bart <- summaries %>% filter(model == "bart_ps-bart")
-
-summaries_ps_glm <- summaries %>% filter(model == "bart_ps-glm")

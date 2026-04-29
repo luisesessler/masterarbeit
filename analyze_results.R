@@ -4,6 +4,11 @@ library(tidyr)
 
 #PATH_RESULTS <- "C:/Users/luise/Documents/Masterarbeit/Results/"
 PATH_RESULTS <- "w:/Masterarbeit/Results/"
+PATH_OVERVIEW <- PATH_OVERVIEW <- "W:/Masterarbeit/Daten/trueATE/cont_dgp_overview.csv"
+dgps <- read.csv(PATH_OVERVIEW) # Needed for normalisation & relative bias
+dgps <- dgps %>%
+  rename(dgp = DGPid)
+dgps$dgp <- paste0("dgp", dgps$dgp)
 
 df <- read.csv(paste0(PATH_RESULTS, "2026-04-10_all_results.csv"))
 
@@ -17,10 +22,24 @@ df_rmse_complete <- df %>% filter(metric == "ate_bias") %>%
     .groups = "drop"
 )
 
-#df_bias <- df %>% filter(metric == "ate_bias") %>%
-#  group_by(model, dgp) %>%
-#  summarise(mean_bias = mean(abs(value), na.rm = TRUE),
-#            sd = sd(value, na.rm = TRUE))
+df_rmse_sdy <- df_rmse_complete %>%
+  left_join(
+    dgps %>% select(dgp, sd_y),
+    by = "dgp"
+  ) %>%
+  mutate(normalized_rmse = abs(rmse / sd_y))
+
+df_bias_complete <- df %>% filter(metric == "ate_bias") %>%
+  group_by(model, dgp) %>%
+  summarise(mean_bias = mean(abs(value), na.rm = TRUE))
+
+df_bias_abs_rel <- df_bias_complete %>%
+  left_join(
+    dgps %>% select(dgp, trueATE),
+    by = "dgp"
+  ) %>%
+  mutate(relative_bias = abs(mean_bias / trueATE))
+
 
 df_coverage_complete <- df %>% filter(metric == "coverage") %>%
   group_by(model, dgp) %>%
@@ -28,8 +47,14 @@ df_coverage_complete <- df %>% filter(metric == "coverage") %>%
 
 df_ci_length_complete <- df %>% filter(metric == "ci_length") %>%
   group_by(dgp, model) %>%
-  summarise(mean_ci_length = mean(value, na.rm = TRUE),
-            sd = sd(value, na.rm = TRUE)) 
+  summarise(mean_ci_length = mean(value, na.rm = TRUE)) 
+
+df_ci_length_sdy <- df_ci_length_complete %>%
+  left_join(
+    dgps %>% select(dgp, sd_y),
+    by = "dgp"
+  ) %>%
+  mutate(normalized_ci_length = abs(mean_ci_length / sd_y))
 
 # Model & DGP Summary
 by <- join_by(model, dgp)
@@ -48,7 +73,6 @@ df_rmse <- df_rmse_complete %>%
 df_coverage <- df_coverage_complete %>%
   filter(coverage > 0.1)
 
-
 # ____________________________________________________________ 
 
 # Compare metrics per model ----
@@ -65,6 +89,13 @@ df_rmse_agg_model <- df_rmse_complete %>%
   summarise(mean_rmse = mean(rmse, na.rm = TRUE),
             median_rmse = median(rmse, na.rm = TRUE),
             sd_rmse = sd(rmse, na.rm = TRUE)) 
+
+df_bias_agg_model <- df_bias_abs_rel %>%
+  group_by(model) %>%
+  summarise(mean_bias = mean(mean_bias, na.rm = TRUE),
+            median_bias = median(mean_bias, na.rm = TRUE),
+            mean_rel_bias = mean(relative_bias, na.rm = TRUE),
+            sd_bias = sd(mean_bias, na.rm = TRUE)) 
 
 # Aggregated DF (CI Length) - per model
 df_ci_agg_model <- df_ci_length_complete %>%
@@ -336,3 +367,28 @@ ggplot(df_nrmse, aes(x = dgp, y = mean_nrmse,
   labs(x = "DGP", y = "RMSE (normalized)", title = "RMSE (normalized) by dgp and model (Outlier removed)")+
   theme(legend.position = "top") +
   scale_color_brewer(palette="Dark2")
+
+
+# Relative bias
+ggplot(df_bias_abs_rel %>% filter(relative_bias < 1), aes(x = dgp, y = relative_bias,
+                                  col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "Relative bias", title = "Relative bias by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+# Normalized RMSE SD(Y)
+ggplot(df_rmse_sdy %>% filter(normalized_rmse < 0.4), aes(x = dgp, y = normalized_rmse,
+                                                          col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "RMSE/SD(Y)", title = "Normalized RMSE by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+# Normalized SD(Y)
+ggplot(df_ci_length_sdy, aes(x = dgp, y = normalized_ci_length,
+                                                          col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "Average CI Length/SD(Y)", title = "Normalized CI Length by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")

@@ -14,11 +14,11 @@ all_datasets <- read.csv(PATH_TRUE_ATES)
 
 set.seed(213)
 
-sigma_params <- list(c(3, 0.99), c(10, 0.75)) # c(3, 0.90) add back!!)
+sigma_params <- list(c(3, 0.90),c(3, 0.99), c(10, 0.75)) 
 k_vals <- c(1, 2, 3, 5)
 n_trees_vals <- c(75, 100, 200)
 
-hyper_bart <- expand.grid(idx = 1:2, k = k_vals, n_trees = n_trees_vals)
+hyper_bart <- expand.grid(idx = 1:3, k = k_vals, n_trees = n_trees_vals)
 
 hyper_bart$nu <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][1])
 hyper_bart$q  <- sapply(hyper_bart$idx, function(i) sigma_params[[i]][2])
@@ -39,8 +39,7 @@ df_tuning_results <- data.frame(
 
 dgp_test <- c(12)
 
-
-for(i in 12){
+for(i in 8){
   dgp_index <- dgps$DGPid[i]
   true_ate <- dgps$trueATE[i]
   datasets_dgp <- all_datasets %>% filter(DGPid == dgp_index)
@@ -77,7 +76,7 @@ for(i in 12){
       print(paste("dgp:", i, "iteration:", j, "hyperparams:", l))
     }
   }
-  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-28_tuning_NO-CV_dgp60_ps-glm_sigma", j,".csv"))
+  write.csv(df_tuning_results, paste0(PATH_RESULTS, "2026-04-29_tuning_NO-CV_dgp40_ps-glm.csv"))
 }
 
 bart_s_learner <- function(y, z, X, true_ate, method_trt = "none", ps_as_covariate = FALSE, 
