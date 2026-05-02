@@ -15,22 +15,27 @@ Why bad results?
 Welche sind wsl heteogen?
 32, 39, 40, 60, 64
 
+2026-05-01_boxplot_ci_abs
 
 
-
-
-
+Metriken:
+Bias
+Relative Bias
+Bias/SD(Y)
+RMSE
+Relative RMSE
+RMSE/SD(Y)
+Coverage Rate
+CI
+Relative CI
+CI/SD(Y)
 
 
 
 TODO:
-- neue Plots erstellen (neues IPTW)
-- RMSE/CI normalisieren: mit SD(Y) und true ATE -> vergleichen
-- nochmal neue averages berechnen für normalisierte Werte
-
-- Heterogenität checken: S-Learner: Varianz der ITEs untereinander
-
-- vlt nochmal CF laufen lassen und checken?
+- Heterogenität auswerten
+- MCMC auswerten
+- Overlap BART Check nochmal laufen lassen? mehr als einmal
 
 
 Für alle getunten DGPS:
@@ -43,8 +48,14 @@ Fragen Flo:
 - Weighting "Tuning": Model selection? Sehr viele Möglichkeiten
 - sollte ich lieber absolute bias berichten? In RMSE ist ja auch Varianz drinne
 - Normalized RMSE/Bias -> welche Metrics?
+- wenn ich morlaisiere, dann durch true ATE oder durch SD(Y) -> finde, dass bei Bias relativ mehr Sinn macht, bei CI SD(Y). Das ist dann aber ja inkonsistent
 - bei IPTW nur PS Methode geändert, sonst keine Model selection
-
+- Benennung Models
+- Computation time
+- Ich bereichte: averages, dann nochmal scatter plot auf DGPs aufgeteilt -> Fokus eher auf Vergleich untereinander als auf Performance allgemein
+- Heterogenität/Overlap geschätzt -> mit einfließen lassen?
+- soll ich mean oder median berichten? Boxplots zeigen ja median
+- wie darstellen, dass weighting dgp30 in allen grafiken weggelassen wird
 
 
 - Tuning:
@@ -65,6 +76,10 @@ Auswahl DGPs für Hyperparameter Tuning:
 
 
 PS-BART Tuning: Parameter (k, n.trees, df, nu) werden auch für PS Estimation Method gesetzt
+
+
+- dazu schreiben: bei Grafiken wurde Outlier removed
+
 
 
 
@@ -103,6 +118,7 @@ Was habe ich gemacht?
 -> Balance
 -> Overlap: 2 PS Methoden, BART-Methode
 -> für BART Methode geschaut, ob sich Ergebnisse verbessern (TODO nachschauen, wie genau ich das gemacht hab: wie viele Iterationen? Nur eine?)
+-> Heterogenität gecheckt (Varianz der geschätzten ITE durch BART und CF) -> ist das zuverlässig?
 
 
 
@@ -122,3 +138,12 @@ DGP60: keine großen Unterschiede
 
 DGP30:
 - bei RMSE gibt es switch:
+
+
+
+
+
+Evtl. TODOs:
+- Variablen Selektion für IPTW
+- Beobachtungen ohne Overlap entfernen -> checken, ob das Ergebnisse verbessert
+- Hyperparameter Cross-Validation

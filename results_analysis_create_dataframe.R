@@ -62,7 +62,7 @@ df_dgps_metrics <- left_join(df_bias, df_rmse) %>%
   left_join(df_coverage) %>% 
   left_join(df_ci_length)
 
-write.csv(df_dgps_metrics, paste0(PATH_RESULTS, "2026-04-30_model_dgp_summary_ALL_metrics.csv"), row.names = FALSE)
+# write.csv(df_dgps_metrics, paste0(PATH_RESULTS, "2026-04-30_model_dgp_summary_ALL_metrics.csv"), row.names = FALSE)
 
 
 # Aggregated Metrics over DGPs
@@ -84,7 +84,7 @@ df_agg_metrics <- df_dgps_metrics %>%
     mean_ci_length_std = mean(ci_length_std)
   )
 
-write.csv(df_agg_metrics, paste0(PATH_RESULTS, "2026-04-30_model_dgp_summary_ALL_metrics.csv"), row.names = FALSE)
+# write.csv(df_agg_metrics, paste0(PATH_RESULTS, "2026-04-30_metrics_summary.csv"), row.names = FALSE)
 
 
 
@@ -92,24 +92,72 @@ write.csv(df_agg_metrics, paste0(PATH_RESULTS, "2026-04-30_model_dgp_summary_ALL
 #----Boxplots
 ggplot(df_dgps_metrics %>% filter(bias_abs < 10), aes(x = model, y = bias_abs)) +
   geom_boxplot() +
-  scale_y_continuous(limits = c(0.05, 0.9))
+  scale_y_continuous(limits = c(0.05, 0.9)) +
   labs(
     x = "Model",
     y = "Bias (absolute)"
   ) +
   theme_minimal()
 
-ggplot(df_models_dgps_all_metrics, aes(x = model, y = bias_rel)) +
+ggplot(df_dgps_metrics, aes(x = model, y = bias_rel)) +
   geom_boxplot() +
+  scale_y_continuous(limits = c(0.00, 0.22)) +
   labs(
     x = "Model",
     y = "Bias (relative)"
   ) +
   theme_minimal()
 
+  ggplot(df_dgps_metrics, aes(x = model, y = coverage)) +
+    geom_boxplot() +
+    scale_y_continuous(limits = c(0.58, 1.0)) +
+    geom_line(stat="summary", fun=mean) +
+  labs(
+    x = "Model",
+    y = "Coverage"
+  ) +
+    theme_minimal()
+  
+  ggplot(df_dgps_metrics, aes(x = model, y = ci_length)) +
+    geom_boxplot() +
+    geom_line(stat="summary", fun=mean) +
+    labs(
+      x = "Model",
+      y = "CI Length (absolute)"
+    ) +
+    theme_minimal()
+  
+  ggplot(df_dgps_metrics, aes(x = model, y = ci_length_rel)) +
+    geom_boxplot() +
+    geom_line(stat="summary", fun=mean) +
+    labs(
+      x = "Model",
+      y = "CI Length (absolute)"
+    ) +
+    theme_minimal()
+  
 
 #----Scatterplots
 
+# Bias
+  
+  ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = bias_abs,
+                                                     col = model)) +
+    geom_beeswarm() +
+    labs(x = "DGP", y = "Bias", title = "Absolute bias by dgp and model (Outlier removed)")+
+    theme(legend.position = "top") +
+    scale_color_brewer(palette="Accent")
+  
+  
+  ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = bias_rel,
+                                                     col = model)) +
+    geom_beeswarm() +
+    labs(x = "DGP", y = "Bias/true ATE", title = "Relative bias by dgp and model (Outlier removed)")+
+    theme(legend.position = "top") +
+    scale_color_brewer(palette="Accent")
+  
+  
+  
 # RMSE
 
 ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = rmse,
@@ -133,4 +181,31 @@ ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = rmse_std,
   labs(x = "DGP", y = "RMSE/SD(y)", title = "Standardized RMSE by dgp and model (Outlier removed)")+
   theme(legend.position = "top") +
   scale_color_brewer(palette="Accent")
+
+# Coverage
+
+ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = coverage, 
+                                                   col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "Coverage rate", title = "Coverage rate by dgp and model (Outlier removed)")+
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+# CI
+
+ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = ci_length, 
+                                                   col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "CI Length", title = "Standardised CI Length by dgp and model (Outlier removed)")+
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+ggplot(df_dgps_metrics %>% filter (rmse < 10), aes(x = dgp, y = ci_length_rel, 
+                                                   col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "CI Length/trueATE", title = "Standardised CI Length by dgp and model (Outlier removed)")+
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+
 
