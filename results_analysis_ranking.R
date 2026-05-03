@@ -1,12 +1,12 @@
 # RMSE
 
-ranked_rmse <- df_dgps_metrics %>% 
-  select(model, dgp, rmse) %>%
+ranked_bias_rel <- df_dgps_metrics %>% 
+  select(model, dgp, bias_rel) %>%
   group_by(dgp) %>%
-  mutate(rank = rank(rmse, ties.method = "first")) %>%
+  mutate(rank = rank(bias_rel, ties.method = "first")) %>%
   ungroup()
 
-rank_counts_rmse <- ranked_rmse %>%
+rank_counts_bias_rel <- ranked_bias_rel %>%
   count(model, rank) %>%
   group_by(model) %>%
   mutate(prop = n / sum(n)) %>%
