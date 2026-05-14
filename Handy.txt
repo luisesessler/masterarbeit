@@ -1,0 +1,84 @@
+Für Beschreibung im Methoden teil (welche Parameter , wie Tuning etc.) anschauen: https://link.springer.com/content/pdf/10.1186/s12911-023-02207-2.pdf
+https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12610 (How Do Applied Researchers Use the Causal Forest? A Methodological Review)-> Übersicht über verschiedene Implentationen
+
+Another tree based approach for causal effect estimation is the causal forest. Similar to a random forests, it is an ensemble of many categorization or regression trees (which have been described in chapter X). In random forests used for prediction, each CART splitting rule is determined by splitting the sample into two parts to maximize the homogeneity of the outcome within the leaves. For causal forests, the goal is to detect heterogeneity in treatment effects. Splits are chosen to maximize treatment effect heterogeneity between leaves, meaning they are made to seperate observations where treatment effects differ and keep observations together where treatment effects are similar. Within each leaf, the treatment effect is estimated by comparing outcomes of treated and control observations. As in a random forest, the introduction of randomness avoids all trees in the ensemble from having the same strucure: each tree is built on only a subset of the data and at each internal node, only a subset of the covariates is considered for determining the splitting rule. 
+
+Causal forests produce asymptotically unbiased and normal estiamates. 
+
+To avoid overfitting and resulting bias, Athey & Imbens introduced honest trees. The data is split into two parts, one subsample is used for building the trees (determining the splitting rules), the other is used to estimate the leaf values. This prevents the causal forest from overfitting.
+
+Hyperparameters:
+A causal forest has a number of parameters which can be tuned. The number of trees in the forest typically ranges between x and x. Since …, an increased number of trees does not lead to overfitting, more trees can however decrease bias. The drawback of a higher number of trees is increased runtime. 
+The default value in the grf-Package is 2000.  
+
+mtry defines the number of covariates that are are considered when determining the splitting rule at an internal node. Lower values lead to less correlation between the trees, while higher values .... Typical recommendations are 
+
+The minimum node size determines how many observations a terminal node has to contain at least. This controls when splitting stops. Lower values allow the causal forest to detect more heterogenenous treatment effects, but they can lead to overfitting. 
+
+The splitting ratio determines how many observations are used for growing the trees and how many for estimating the lesf values.
+
+
+
+Wichtig:
+Causal machine learning
+
+In contrast to predictive machine learning models, the goal is not to predict the outcome. Instead, a good estiamtion of parameter tau is desired. For that reason, the typical ML approach of splitting the data into train and test set is not necessary. In predictive ML this is done to ensure that the model are trained on a subset of the data and are able to generalize to new data and still be able to make good predictions.
+
+T Learner worse than BART:
+Overall, T-learners do not 
+appear to be a good choice in terms of average precision; compared to both the S-learner (with 
+BART as the base learner in either case) and the R-learner (with LASSO as the base learner in 
+either case), they perform wors
+
+
+The T-learners (LASSO T, RF T, BART T) tend to have higher standard errors, reflecting their two independent estimation processes. 
+
+
+https://files.eric.ed.gov/fulltext/ED678238.pdf
+
+Hahn et al. (2020)
+
+https://arxiv.org/pdf/2407.14365
+
+
+T Learner might be better at CATE estimation -> we don't calculate that here
+
+T-learner better in complex setting, S in simpler setting:
+https://discovery.ucl.ac.uk/id/eprint/10175947/2/ThesisFinal_AlbertoCaron.pdf
+
+
+
+
+Regression für causality erklärt:
+https://arxiv.org/pdf/2409.05665?
+
+
+
+BaRT better than IPTW and OLS (aber halt nicht doubly robust): https://ieeexplore.ieee.org/document/11429813
+
+
+
+
+Findings are mixed. 
+
+Quellen:
+
+ACIC DATA USED:
+
+(Mahajan et al, 2022, RAMADHANTIet al., 2025, Wang et al, 2026)
+
+Ramadhanti, N. S., Lim, S., Chorev, M., Chetty, M., & Charchar, F. (2025, September). Propensity Score Estimation for Causal Inference in Observational Healthcare Studies. In Proceedings of the 2025 18th Health Informatics Knowledge Management Conference (pp. 1-8).
+
+Wang, C., Zhao, H., & Chen, Y. (2026). InferenceEvolve: Towards Automated Causal Effect Estimators through Self-Evolving AI. arXiv preprint arXiv:2604.04274.
+
+Mahajan, D., Mitliagkas, I., Neal, B., & Syrgkanis, V. (2022). Empirical analysis of model selection for heterogeneous causal effect estimation. arXiv preprint arXiv:2211.01939.
+
+
+
+
+Causal BART:
+continuous treatment: 
+Souto, H. G., & Neto, F. L. (2024a). Advancing causal inference: A nonparametric approach to ate and cate estimation with continuous treatments. https://doi.org/10.48550/ARXIV.2409.06593
+
+Survival:
+Kabata, D., Henderson, N. C., & Varadhan, R. (2026). Quantifying uncertainty of individualized treatment effects in right-censored survival data: a comparison of Bayesian additive regression trees and causal survival forest. Health Services and Outcomes Research Methodology, 26(1), 87-107.
