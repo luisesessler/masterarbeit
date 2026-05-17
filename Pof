@@ -1,0 +1,39 @@
+The potential outcomes framework (POF) is a framework to formally define causal effects. As it was introduced by Neyman (1923) and extended by Rubin (1974) for observational studies, it is also known as the Neyman-Rubin causal model (NRCM).
+
+A population or sample of n units is indexed by i = 1, …, n. For each unit, X_i is a set of covariates. Y_i is the outcome variable, where the change is expected. T_i is the treatment assignment, indicating whether the unit receives treatment or not. In the case of binary treatment assignment, T_i = 1 indicates that the unit receives treatment, T_i = 0 indicates that the unit does not.  For each unir, there are two potential outcomes, one where they receive treatment, Y_i(T = 1), and the other where they do not receive treatment, Y_i(T = 0). 
+In the example, the sample is a group of n students, Y_i is the test score and T_i indicates whether a student receives tutoring. Y_i(1) would be the test score of individual i if they took tutoring classes. Y_i(0) would be the test score if they did not.
+
+Having defined these potential outcomes, different treatment effects can be defined. They are typically denoted with tau.
+
+Individual treatment effect (ITE): The ITE is the effect that the treatment has for an individual unit and is defined as the difference between the two potential outcomes of that unit.
+
+ITE = tau_i = Y_i(1) – Y_i(0)
+
+All other covariates describing the unit are held fixed, the only thing that changes is the treatment. Therefore, any difference observed between the potential outcomes can be attributed to the treatement.
+
+This calculation however is conceptual, because in reality, we can never observe both outcomes. This is the so-called fundamental problem of causality: Either a unit receives treatment or it does not, hence we only observe one of the outcomes. The other outcome stays "potential" and is called counterfactual. Since both outcomes can never be observed at the same time, the treatment effect of an individual (ITE) can never be directly identified. 
+
+Because of that, researchers typcially focus on aggregate measures of the causal effects.
+
+Average treatment effect (ATE):
+The average treatment effect is the average effect of the treatment across the whole population. It is defined as the expectation of the difference between the two potential outcomes.
+
+ATE = τ =E[Yi​(1)−Yi​(0)]
+
+If the law of large numbers holds, the ATE can be estimated from a sample of sufficient size as the average of the individual treatment effects of the population, although these are not directly observable.
+ATE = 1/n * Summe ( Y_i(1) – Y_i(0))
+
+Conditional Average Treatment Effect (CATE): Treatment effects can differ between subgroups. In the example it could be possible that tutoring works better on male than on female students or on students from a specific socio-economic background. When interested in the treatment effect for a subpopulation, the conditional average treatment effect can be calculated, which is the expected value of the difference between the outcome under treatment and the outcome under no treatment, conditioned on the values that define the subpopulation of interest.
+
+CATE = τ (x) = E[Y (1) − Y (0) | X = x]
+
+If the treatment effect differs for different units depending on their covariates, it is called a heterogeneneous treatment effect. If the treatment effect is the same for all units, it iscalled a homogeneous treatment effect. In this case, the CATE is equal to the ATE for all covariate combinations.
+
+Average treatment effect on the treated/Average treatment effect on the control (ATT/ATC):
+When evaluating a treatment, one is typically interested in the effect the treatment has on those who actually receive it (Heckman and Robb (1984), Quelle checken). This can be calculated as the expectation of the difference of the counterfactuals for all individuals who receive treatment.
+
+ATT = E(Y(1) - Y(0) | X = 1)
+ATC = E(Y(1) - Y(0) | X = 0)
+
+Similar to the individual treatment effect, average treatment effects cannot be directly observed. However, they are easier to estimate, since identification relies on average comparisons between groups rather than unit-level counterfactuals. 
+Intuitively one could assume that in order to estimate the average treatment effect, we could simply subtract the average outcome of individuals who were treated and individuals in the control group (since E(Y(1) - Y(0)) is the same as E(Y(1)) - E(Y(0))). Here a new problem arises, confounding variables. In an ideal setting, the outcome would only be determined by the treatment, however in realistic settings, there are many more parameters that have an effect on the outcome, so called covariates, different variables that describe the individuals.
