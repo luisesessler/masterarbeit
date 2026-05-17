@@ -1,0 +1,7 @@
+A confounder is a variable that has an influence on both the outcome as well as on treatment assignment. This is a problem because the observed association between treatment and outcome can not be attributed solely to the treatment. Instead, some or even all of the association may be driven by the confounder, which affects both variables. As a result, estimates of treatment effects may be biased or spurious. 
+
+In the example, a confounder could be motivation. (Beispiel einfügen) The relationship is displayed in Figure X. 
+
+To still get valid estimates, it is necessary to control for confounding factors. The spurious association between the treatment assignment and the outcome, that the confounders induce, must be removed. Then, only the effect of the treatment on the outcome remains. For this purpose, different approaches have been developed. Most methods, some of which will be introduced in Chapter X,  include the confounders in the model as covariates. To identify variables which influence both treatment assignment and outcome, domain knowledge is often required.
+
+Methods used for treatment effect estimation have different strategies of controlling for confounders. 
