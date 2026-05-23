@@ -1,0 +1,82 @@
+Treffen mit Flo (26. Mai):
+
+TODO:
+- R^2 berechnen
+- BART Overlap Paper raussuchen
+- Tuning Paper raussuchen
+
+Welche Grafiken/Tabellen brauche ich?
+- Balance Tabelle
+- Overlap Tabelle
+- Bias/RMSE
+- Tuning Results
+
+
+
+
+
+Was habe ich gemacht?
+1. Diagnostics
+- Balance
+- Overlap (BART SD Rule, PS Methods sind nicht besonders hilfreich)
+- Heterogenous Treatment effects (Varianz der geschätzten ITE durch BART und CF)
+- R^2 für Linearity
+
+
+Fragen:
+- Welche nutzen?
+- Overlap & Heterogeneity sind ja auch irgendwie mit BART verknüpft
+
+
+
+2. Tuning:
+- 4 DGPS rausgesucht, auf jeweils 20 Datensätzen getuned
+Folgende Parameter getuned:
+- BART: ntrees, k, sigdf, sigquant
+- Causal forest: min_leaf_size, sample_fraction, mtry
+- IPTW: PS mit BART geschätzt
+
+-> nicht via cross-validation, sondern einfach mit true ATE verglichen
+
+
+- jeweils die Kombination mit dem niedrigsten RMSE rausgesucht (außer IPTW, da gibt's ja nur ein anderes Ergebnis)
+-> Unterschiede zwischen Metrics gecheckt bzw geplottet 
+
+
+Warum Auswahl der drei DGPs für Tuning?
+-> nicht die DGPs mit schlechtesten Ergebnissen, sondern wo es die größten Unterschiede zwischen Modellen gibt
+
+-> 30: niedrigste Coverage im Allgemeinen, große Unterschiede zwischen RMSE S-Learnern und Rest -> Chance für andere
+-> 60: IPTW & T-Learner niedrigster Bias -> Chance für S-Learner 
+-> 40: S_learner am besten -> Chance für andere, weniger Observations 
+-> 63: Bias höher von S-Learnern als CF und T -> Chance für S-Learner
+
+
+
+Fragen:
+- IPTW so okay oder Variablen Selektion?
+- okay so oder mit cross-validation? Wie? Über prediction?
+- nur für die ersten 20 Beobachtungen -> Okay so? Ergebnisse sind dann marginal anders als bei 100 Iterationen
+- Welche DGPs?
+
+
+Allgemeine Fragen:
+- Welche Metriken? Bias oder RMSE? Normalisiert (/true value oder /SD(Y))?
+- Computation time noch rein
+- Ich bereichte: averages, dann nochmal scatter plot auf DGPs aufgeteilt -> Fokus eher auf Vergleich untereinander als auf Performance allgemein
+- soll ich mean oder median berichten? Boxplots zeigen ja median
+- wie darstellen, dass weighting dgp30 in allen grafiken weggelassen wird
+
+
+
+Was könnte man noch machen?
+- Variablen Selektion für IPTW
+- Beobachtungen ohne Overlap entfernen -> checken, ob das Ergebnisse verbessert
+- Hyperparameter Cross-Validation
+
+
+
+
+
+
+
