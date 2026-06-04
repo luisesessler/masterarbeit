@@ -1,0 +1,17 @@
+Common Support Tuning:
+One of the assumptions for unbiased estimates of treatment effects is overlap (see Chapter X). It requires that for each combination of covariates, there is a positive chance of both receiving and not receiving treatment. This translates to in both groups observations of the same cpvariate combinations being present. When overlap is lacking for some regions of the covariate space, the model cannot compare treated and untreated units to learn about their differences and has to extrapolate. Some models account for that better than others, but it is a general problem. To avoid bias that occurs due to extrapolation, a common strategy is to exclude observations that are outside the overlap space.
+
+There are different approaches to estimate overlap. Quantifying it exactly is not feasible in high-dimensional settings. Common methods make use of propensity scores and calculate the overlap of the propensity distributions distributions of treatment and cpntrol group. X however criticized that those methods do not take into account that not all covariates are equally part of the treatment effect mechanism. A ps overlap method might identify overlap in a covaroate area and 
+
+
+X therefore proposed another method for identifying units that are out of the overlap area which is BART based.
+
+
+Hyperparameter Tuning:
+BART models and causal forests both have a number of hyperparameters which can be spcified.. 
+Due to limited computational resources, not all hyperparameters were tuned. Instead, those who are expected to only have a small impact on the results are kept fixed and those who are expected to influence results strongly are tuned. Parameters are tuned in a grid search.
+For BART, the parameters of the leaf values prior *shrinkage parameter k and the number of trees m) are tuned as well as the parameters for the variance prior (degrees of freedom nu and percentage q). For k, possible values 1, 2, 3, 5 are chosen (default is 2, for m 75, 100 and 200 (default is 75). For the variance parameter, three combinations of the two parameters are chosen: (3, 0.9), (3, 0.99) and (10, 0.75). Default is (3, 0.9)
+
+This results in the 4x3x3 grid with a total of 36 combinations. 
+
+For the causal forest, mtry (the number of covariates that are considered for chosing the splitting rule), min.node. (minimum number of observations in a terminal node) and tuning.sample are tuned as they are expected to have the biggest impact (paper über random forests glaub ich). For minimum node size, values are (), for mtry () and for splitting values (0.3, 0.5). Higher values are not possible as at least half of the sample is needed for calculation of standard errors.
