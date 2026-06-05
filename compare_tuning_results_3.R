@@ -1,20 +1,18 @@
-PATH_RESULTS = "W:/Masterarbeit/Results/final/"
+PATH_RESULTS = "W:/Masterarbeit/Results/"
+PATH_OVERVIEW <- "W:/Masterarbeit/Daten/trueATE/cont_dgp_overview.csv"
+
+dgps <- read.csv(PATH_OVERVIEW)
 
 # DGP60
 
-# IPTW
-tuning_results_60_iptw <- read.csv(paste0(PATH_RESULTS, "2026-04-28_tuning_NO-CV_dgp60_iptw.csv"))
-
-# Causal forest
-tuning_results_60_cf <- read.csv(paste0(PATH_RESULTS, "2026-04-24_tuning_NO-CV_dgp60_causal-forest_.csv"))
-
-# BART Models
-
-tuning_results_60_bart <- read.csv(paste0(PATH_RESULTS, "2026-04-28_tuning_NO-CV_dgp60_ALL_bart-models_sigma_complete.csv"))
 
 # Calculate RMSE
 
-df_rmse_bart <- tuning_results_60_bart %>% filter(metric == "ate_bias") %>%
+get_default_and_tuned_metrics <- function(tuning_bart, tuning_cf, tuning_iptw, n_cov){
+mtry_default = min(ceiling(sqrt(n_cov)) + 20, n_cov)
+  
+  
+df_rmse_bart <- tuning_bart %>% filter(metric == "ate_bias") %>%
   group_by(model, dgp, k, n_trees, nu, q) %>%
   summarise(
     rmse = sqrt(mean(value^2)),
@@ -23,14 +21,14 @@ df_rmse_bart <- tuning_results_60_bart %>% filter(metric == "ate_bias") %>%
 
 ps_bart <- df_rmse_bart %>% filter(model == "bart_ps-bart")
 
-df_rmse_cf <- tuning_results_60_cf %>% filter(metric == "ate_bias") %>%
+df_rmse_cf <- tuning_cf %>% filter(metric == "ate_bias") %>%
   group_by(model, min_node_size, sample_fraction, mtry) %>%
   summarise(
     rmse = sqrt(mean(value^2)),
     .groups = "drop"
   )
 
-df_rmse_iptw <- tuning_results_60_iptw %>% filter(metric == "ate_bias") %>%
+df_rmse_iptw <- tuning_iptw %>% filter(metric == "ate_bias") %>%
   group_by(model, ps_model) %>%
   summarise(
     rmse = sqrt(mean(value^2)),
@@ -40,30 +38,14 @@ df_rmse_iptw <- tuning_results_60_iptw %>% filter(metric == "ate_bias") %>%
 # Default parameter
 
 default_bart <- df_rmse_bart %>% filter(k == 2, n_trees == 75, nu == 3, q == 0.9)
-default_cf <- df_rmse_cf %>% filter(min_node_size == 5, sample_fraction == 0.5, mtry == 26)
+default_cf <- df_rmse_cf %>% filter(min_node_size == 5, sample_fraction == 0.5, mtry == mtry_default) 
 default_iptw <- df_rmse_iptw %>% filter(ps_model == "linear_basic")
 
-df_comparison_rmse <- data.frame(model = character(),
-                                 default = character(),
-                                 rmse = numeric())
-
-# Add all defaults to DF
-
-df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
-  model = default_bart$model,
-  default = "default",
-  rmse = default_bart$rmse))
-
-
-df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
-  model = default_cf$model,
-  default = "default",
-  rmse = default_cf$rmse))
-
-df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
-  model = default_iptw$model,
-  default = "default",
-  rmse = default_iptw$rmse))
+df_comparison_rmse <- rbind(
+  data.frame(model = default_bart$model, default = "default", rmse = default_bart$rmse),
+  data.frame(model = default_cf$model, default = "default", rmse = default_cf$rmse),
+  data.frame(model = default_iptw$model, default = "default", rmse = default_iptw$rmse)
+)
 
 # Add best tuned results
 
@@ -93,25 +75,17 @@ df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
 
 # IPTW
 
-bart_iptw <- df_rmse_iptw %>% filter(ps_model == "bart")
+bart_iptw <- df_rmse_iptw %>% filter(ps_model == "bart") # TODO best raussuchen
 
 df_comparison_rmse <- rbind(df_comparison_rmse, data.frame(
   model = bart_iptw$model,
   default = "tuned",
   rmse = bart_iptw$rmse))
 
-#Scatterplot
-# TODO x Achsen nicht numerisch, am besten benennen und umdrehen!
-ggplot(df_comparison_rmse, aes(x = default, y = rmse, col = model)) +
-  geom_point() +
-  labs(x = "Default vs tuned parameters", y = "RMSE", title = "Default vs tuned parameters") +
-  theme(legend.position = "top") +
-  scale_color_brewer(palette="Dark2")
-
 
 
 #------Coverage
-df_cov_bart <- tuning_results_60_bart %>%
+df_cov_bart <- tuning_bart %>%
   filter(metric == "coverage") %>%
   group_by(model, dgp, k, n_trees, nu, q) %>%
   summarise(
@@ -119,7 +93,7 @@ df_cov_bart <- tuning_results_60_bart %>%
     .groups = "drop"
   )
 
-df_cov_cf <- tuning_results_60_cf %>%
+df_cov_cf <- tuning_cf %>%
   filter(metric == "coverage") %>%
   group_by(model, min_node_size, sample_fraction, mtry) %>%
   summarise(
@@ -127,7 +101,7 @@ df_cov_cf <- tuning_results_60_cf %>%
     .groups = "drop"
   )
 
-df_cov_iptw <- tuning_results_60_iptw %>%
+df_cov_iptw <- tuning_iptw %>%
   filter(metric == "coverage") %>%
   group_by(model, ps_model) %>%
   summarise(
@@ -151,7 +125,7 @@ default_cov_bart <- df_cov_bart %>%
   filter(k == 2, n_trees == 75, nu == 3, q == 0.9)
 
 default_cov_cf <- df_cov_cf %>%
-  filter(min_node_size == 5, sample_fraction == 0.5, mtry == 26)
+  filter(min_node_size == 5, sample_fraction == 0.5, mtry == mtry_default)
 
 default_cov_iptw <- df_cov_iptw %>%
   filter(ps_model == "linear_basic")
@@ -177,19 +151,8 @@ df_comparison_cov <- rbind(df_comparison_cov,
 )
 
 
-ggplot(df_comparison_cov, aes(x = default, y = coverage, col = model)) +
-  geom_beeswarm() +
-  labs(x = "Default vs tuned parameters",
-       y = "Coverage",
-       title = "Default vs tuned parameters (Coverage)") +
-  theme(legend.position = "top") +
-  scale_color_brewer(palette = "Dark2")
-
-write.csv(df_comparison_cov, paste0(PATH_RESULTS, "2026-04-29_tuning_coverage"))
-
-
 #-----CI Length
-df_ci_bart <- tuning_results_60_bart %>%
+df_ci_bart <- tuning_bart %>%
   filter(metric == "ci_length") %>%
   group_by(model, dgp, k, n_trees, nu, q) %>%
   summarise(
@@ -197,7 +160,7 @@ df_ci_bart <- tuning_results_60_bart %>%
     .groups = "drop"
   )
 
-df_ci_cf <- tuning_results_60_cf %>%
+df_ci_cf <- tuning_cf %>%
   filter(metric == "ci_length") %>%
   group_by(model, min_node_size, sample_fraction, mtry) %>%
   summarise(
@@ -205,7 +168,7 @@ df_ci_cf <- tuning_results_60_cf %>%
     .groups = "drop"
   )
 
-df_ci_iptw <- tuning_results_60_iptw %>%
+df_ci_iptw <- tuning_iptw %>%
   filter(metric == "ci_length") %>%
   group_by(model, ps_model) %>%
   summarise(
@@ -229,17 +192,18 @@ default_ci_bart <- df_ci_bart %>%
   filter(k == 2, n_trees == 75, nu == 3, q == 0.9)
 
 default_ci_cf <- df_ci_cf %>%
-  filter(min_node_size == 5, sample_fraction == 0.5, mtry == 26)
+  filter(min_node_size == 5, sample_fraction == 0.5, mtry == mtry_default)
 
 default_ci_iptw <- df_ci_iptw %>%
   filter(ps_model == "linear_basic")
 
-df_summary_dgp30 <- bind_rows(
+df_summary <- bind_rows(
   
   # -------- BART DEFAULT --------
   default_bart %>%
     mutate(setting = "default",
-           ci_length = default_ci_bart$ci_length),
+           ci_length = default_ci_bart$ci_length,
+           coverage  = default_cov_bart$coverage),
   
   # -------- BART TUNED --------
   best_rmse_bart %>%
@@ -250,7 +214,8 @@ df_summary_dgp30 <- bind_rows(
   # -------- CF DEFAULT --------
   default_cf %>%
     mutate(setting = "default",
-           ci_length = default_ci_cf$ci_length),
+           ci_length = default_ci_cf$ci_length,
+           coverage  = default_cov_cf$coverage),
   
   # -------- CF TUNED --------
   best_rmse_cf %>%
@@ -261,7 +226,8 @@ df_summary_dgp30 <- bind_rows(
   # -------- IPTW DEFAULT --------
   default_iptw %>%
     mutate(setting = "default",
-           ci_length = default_ci_iptw$ci_length),
+           ci_length = default_ci_iptw$ci_length,
+           coverage  = default_cov_iptw$coverage),
   
   # -------- IPTW TUNED --------
   bart_iptw %>%
@@ -269,7 +235,68 @@ df_summary_dgp30 <- bind_rows(
     left_join(best_ci_iptw, by = c("model", "ps_model")) %>%
     mutate(setting = "tuned")
 )
+return(df_summary)
+
+}
+
+# DGP 30
+
+summary_30_tuning <- get_default_and_tuned_metrics(dgp30_bart_tuning, dgp30_cf_tuning, dgp30_ipwt_tuning, dgps$n_covariates[dgps$DGPid == 30])
+summary_30_tuning$rmse_relative <- summary_30_tuning$rmse / 10 
+
+ggplot(summary_30_tuning, aes(x = setting, y = rmse_relative, col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "RMSE", title = "RMSE by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+
+write.csv(summary_30_tuning, paste0(PATH_RESULTS,"2026-06-05_tuning_summary_dgp30.csv"), row.names = FALSE)
+
+
+
+# DGP 40
+
+summary_40_tuning <- get_default_and_tuned_metrics(dgp40_bart_tuning, dgp40_cf_tuning, dgp40_ipwt_tuning, dgps$n_covariates[dgps$DGPid == 40])
+summary_40_tuning$rmse_relative <- summary_40_tuning$rmse / 6.961985 
+
+ggplot(summary_40_tuning, aes(x = setting, y = rmse, col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "RMSE", title = "RMSE by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+write.csv(summary_40_tuning, paste0(PATH_RESULTS,"2026-06-05_tuning_summary_dgp40.csv"), row.names = FALSE)
 
 
 # DGP 60
 
+summary_60_tuning <- get_default_and_tuned_metrics(dgp60_bart_tuning, dgp60_cf_tuning, dgp60_ipwt_tuning, dgps$n_covariates[dgps$DGPid == 60])
+summary_60_tuning$rmse_relative <- summary_60_tuning$rmse / 1.686248 
+
+
+ggplot(summary_60_tuning, aes(x = setting, y = rmse, col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "RMSE", title = "RMSE by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+write.csv(summary_60_tuning, paste0(PATH_RESULTS,"2026-06-05_tuning_summary_dgp60.csv"), row.names = FALSE)
+
+
+
+
+# DGP 63
+
+summary_63_tuning <- get_default_and_tuned_metrics(dgp63_bart_tuning, dgp63_cf_tuning, dgp63_ipwt_tuning, dgps$n_covariates[dgps$DGPid == 63])
+summary_63_tuning$rmse_relative <- summary_63_tuning$rmse / 2.000000
+ 
+
+
+ggplot(summary_63_tuning, aes(x = setting, y = rmse, col = model)) +
+  geom_beeswarm() +
+  labs(x = "DGP", y = "RMSE", title = "RMSE by dgp and model (Outlier removed)") +
+  theme(legend.position = "top") +
+  scale_color_brewer(palette="Accent")
+
+write.csv(summary_63_tuning, paste0(PATH_RESULTS,"2026-06-05_tuning_summary_dgp63.csv"), row.names = FALSE)
