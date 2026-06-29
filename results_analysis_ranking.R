@@ -1,16 +1,21 @@
+df_dgps_metrics <- read.csv("w:\\Masterarbeit\\Results\\2026-06-29_dgp_summaries_FINAL.csv")
+
 # RMSE
 
-ranked_bias_rel <- df_dgps_metrics %>% 
-  select(model, dgp, bias_rel) %>%
+ranked_rmse_rel <- df_dgps_metrics %>% 
+  select(model, dgp, rmse_rel) %>%
   group_by(dgp) %>%
-  mutate(rank = rank(bias_rel, ties.method = "first")) %>%
+  mutate(rank = rank(rmse_rel, ties.method = "first")) %>%
   ungroup()
 
-rank_counts_bias_rel <- ranked_bias_rel %>%
+rank_counts_rmse_rel <- ranked_rmse_rel %>%
   count(model, rank) %>%
   group_by(model) %>%
   mutate(prop = n / sum(n)) %>%
   ungroup()
+
+write.csv(rank_counts_rmse_rel, paste0(PATH_RESULTS,"2026-06-29_ranking_rmse_rel.csv"), row.names = FALSE)
+
 
 ranked_rmse_summary <- ranked_rmse %>%
   group_by(model) %>%
@@ -36,13 +41,11 @@ ranked_rmse_summary <- ranked_rmse %>%
 
 
 # Coverage
-df_coverage <- df %>% filter(metric == "coverage") %>%
-  group_by(dgp, model) %>%
-  summarise(mean_coverage = mean(value, na.rm = TRUE))
 
-ranked_coverage <- df_coverage %>%
+ranked_coverage <- df_dgps_metrics %>% 
+  select(model, dgp, coverage) %>%
   group_by(dgp) %>%
-  mutate(rank = rank(-mean_coverage, ties.method = "first")) %>%
+  mutate(rank = rank(-coverage, ties.method = "first")) %>%
   ungroup()
 
 rank_counts_coverage <- ranked_coverage %>%
@@ -50,6 +53,9 @@ rank_counts_coverage <- ranked_coverage %>%
   group_by(model) %>%
   mutate(prop = n / sum(n)) %>%
   ungroup()
+
+write.csv(rank_counts_coverage, paste0(PATH_RESULTS,"2026-06-29_ranking_coverage.csv"), row.names = FALSE)
+
 
 ranked_coverage_summary <- ranked_coverage %>%
   group_by(model) %>%
