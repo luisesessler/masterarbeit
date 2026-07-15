@@ -1,0 +1,63 @@
+Ich habe als Werkstudentin bei SAP im Bereich User Research gearbeitet. SAP ist ein Softwareunternhemen, was hauptsächlich Enterprise Resource P Systeme entwickelt und verkauft. Ich habe im Geschäftsbereich Mobile Apps gearbeitet und dort 
+
+Die Aufgabe meines Teams war es in Studien die Bedürfnisse und das Verhalten der Appnutzer zu untersuchen und die Ergebnisse so aufzubereiten, dass Entscheidungen für Weiternetwicklungen der Apps getroffen werden können. Diese Arbeit fand in enger Zusammenarbeit mit den Produktmanagern, Softwareentwicklern, UX Designern und bei methodischen Themen mit anderen User Research Teams statt.
+
+Eingesetzt wurden quantitative und qualitative Methoden. Zu den qualitativen Methoden gehören Nutzerinterviews und Kundenworkshops, bei denen Prototypen gezeigt und Feedback gesammelt wurde. Da bei diesen Methoden keine statistischen Analysen eingesetzt wurden, werde ich nicht tiefer darauf eingehen.
+
+Die häufigsten statistischen Methoden, die eingesetzt wurden, sind A/B-Tests. Die Studien wurden hauptsächlich online durchgeführt. Dafür wurden Fragebögen erstellt, in denen den Teilnehmern Appprototypen gezeigt wurden. Dabei wurden den Nutzern meistens zwei verschiedene Versionen des gleichen Interfaces gezeigt und die Nutzer wurden gefragt, welches Interface ihnen besser gefällt.
+
+
+
+Pilotprojekt zur Evaluierung der Kategorisierung offener Angaben mit LLMs
+Mit der Einführung einer unternhemenseigenen KI evaluierten wir mögliche Anwednungsfälle für unseren Tätigkeitsbereich. Als ein erster Use Case wurde die Kategorisierung offener Angaben, welche sonst händisch durchgeführt wird, exploriert. Dafür habe ich zunächst eine Zufallsstichprobe mehrer Felder mit offenen Angaben gezogen und diese randomisiert. Eine weitere Werkstudentin und ich kategorisierten die Angaben getrennt voneinander und erstellten einen Kategorisierungssystem. Im Anschluss berechneten wir Cohen's Kappa, um die Intercoder-Reliabilität sicherzustellen. Anschließen stellten wir de LLM das Kategorisierungssystem zur Verfügung und ließen es die Angaben nach diesem kategorisieren. Zum Vergleich wurden Precision & Recall berechnet. Die Ergebnisse wurden an ein Entwicklerteam weitergegeben, welches das LLM weiter verbessert.
+
+
+Programmierung von Python-Skripten zur Datenaufbereitung und Automatisierung wiederkehrender Aufgaben
+
+
+Die Studien bestanden aus Fragebögen, welche Online durgeführt wurden. Zu meinen Aufgaben gehörte die Programmierung von Python-Skripts für Datenaufbereitungsroutinen. Dazu gehörte etwa das Umkodieren von Lickert-Skalen, da die Ergebnisse aus dem Fragetool als Text angegeben wurden statt als Nummern.
+Außerdem würden vor der eigentlichen Analyss "Speeder" aussortiert, also Teilnehmern, die sich zu schnell durch den Fragebogen klicken oder immer die gleichen Antworten geben (immer 5 auf Skalen klicken) oder bei Testfragen ("klicken sie hier 2") die falsche Frage anklickten.
+Zudem mussten für manche Studien die Datensätze zusammengefügt werden, da unterschiedliche Nutzergruppen unterschiedliche Fragebögen erhielten, manche Fragen aber gebündelt ausgewertet werden sollten. 
+
+
+Statistische Auswertung
+Für demografische Angaben wurden typische despriptive Statistiken wie Mittelwerte, Varianz und Maximal/Minimalwert berechnet. Für Ergebnispräsentationen habe ich außerdem Grafiken, etwa Balkendiagramme, Pie Charts und ... erstellt. Dafür nutzte ich x.
+Außerdem wurden für manche Fragen Korrelationen berechnet, etwa zwischen empfundenem ease of use (übersetzen), Zufriedenheit und Nutzungsabsicht ("Wie wahrscheinlich ist es, dass Sie die App in Zulunft benutzen werden?"), drei typischen UX-Metriken, die in so gut wie jeder Studie abgefragt werden.
+
+Am häufigsten zum Einsatz kamen A/B-Tests. Dabei werden die Teilnehmenden randomisiert einer Gruppe zugeorndet. Die Gruppen bekommen dann unterschiedliche App-Prototypen, die sie nutzen sollen und dann eine Bewertung zu verschiedenen Metriken, z.B. etwa zwischen empfundenem ease of use (übersetzen), Zufriedenheit und Nutzungsabsicht ("Wie wahrscheinlich ist es, dass Sie die App in Zulunft benutzen werden?") Auf 5- oder 7-stufigen Lickert-Skalen abgeben müssen.
+Außerdem mussten die Nutzer an den Prototypen Aufgaben lösen und es wurden z.B. die benötigte Zeit und die Anzahl der Klicks erfasst. 
+Die Ergebnisse der beiden Gruppen wurden durch Signifikanztests miteinander verglichen, um zu untersuchen. Dafür wurden je nach Skalenniveau
+
+m Anschluss dazu wurden die beiden Gruppen verglichen...
+
+Zudem wurden für einige der genannten Metriken Korrelationen berechnet, z.B. um zu prüfen, ob es einen Zusammenhang zwischen Zufriedenheit und Nutzungsabsicht gibt.
+
+Weitere Python-Skripte erstellte ich zum automatischen Auslesen über die API des Fragebogentools und Speichern der Daten während der Fragebogen online war (damit bei technischen immer eine Sicherheitskopie des aktuellen Tages vorhanden ist). Dafür verwendete ich die Bibliotheken requests und x.
+
+Für das In App Feedback mussten außerdem die Übersetzungen der Texte in 20+ Sprachen in XML Dateien erstellt werden. Dafür wurden die übersetzten Texte, die von der Übersetzungsabteilung in einer Excel-Datei bereitgestellt wurden, ausgelesen und in der XML-Datei eingefügt werden. Dafür verwendete ich die Bibliothek X. 
+
+ Außerdem werteten wir In App Feedback einiger Apps aus. Die Nutzer konnten dort Feedback auf einer Skala von 1-5 geben
+
+
+Bewertung:
+Ich habe meine Tätigkeit als sehr positiv in Erinnerung. Neben der Möglichkeit meine methodischen Fähigkeiten zu erweitern und statistische Methoden in einem Anwendungskontext einzusetzen habe ich auch viele Soft Skills gelernt. Dazu gehört unter anderem die Kommunikation mit Stakeholdern und das Erklären angewendeter statistischer Methoden für fachfremde Personen. 
+Das Lösen von Konflikten, wenn Personen verschiedene Prioritäten haben
+Einblicke in ein großes international tätiges Unternehmen
+Englisch kenntnisse verbessern, da hauptsächlich auf Englisch kommuniziert wurde
+Nutzerforschung ist ein spannendes Feld an der Schnittstelle von Psychologie, Informatik und Datenanalyse
+Besonders spannend fand ich es auch an der Erhebung dee Daten dabei zu sein, im Gegensatz zum Studium, wo ich wogwnrlixh nur Daten ausgewertet habe
+Meine Teamleiterin hatte zuvor länger in der Wissenschaft gearbeitet und war deshalb um methodische Korrektheit bemüht, da wir die Nutzertests jedoch im Auftrag der Produktmanager und Desingteams durchführten, war diesen das häufig nicht so wichtig und ihnen reichten meist absolute Zahlen (z.B. Prototyp 1 hat im Durchschnitt Bewertung X, Prototyp 2 nur Y), auch wenn diese Tests manchmal nicht signifilant wurden.
+Auch wenn meine Teamleiterin bemüht war, statistische Methoden im Arbeitsalltag zu integrieren, habe ich bei anderen Teams mitbekommen, dass diese oft z.B. keinen Wert auf representative Stichproben legen etc
+
+
+Programmierung von Python-Skripten zur Datenaufbereitung
+Viele Studien wurden mithilfe von Online-Fragebögen durchgeführt. Zu meinen Aufgaben gehörte die Entwicklung von Python-Skripten zur Automatisierung verschiedener Datenaufbereitungsroutinen. Dazu zählte beispielsweise die Umkodierung von Likert-Skalen, da die Antworten aus dem verwendeten Befragungstool zunächst als Textwerte und nicht als numerische Variablen vorlagen.
+Vor der eigentlichen Datenanalyse erfolgte zudem eine Qualitätsprüfung der erhobenen Daten. Dabei wurden „Speeder“ identifiziert und entfernt, also Teilnehmende, die den Fragebogen in auffällig kurzer Zeit bearbeiteten. Zusätzlich wurden Teilnehmer entfernt, die durch einheitliches Antwortverhalten (z. B. wiederholtes Auswählen derselben Skalenstufe) oder durch falsch beantwortete Kontrollfragen („Bitte wählen Sie Antwortoption 2“) auffielen.
+
+Für einige Studien war außerdem eine Zusammenführung verschiedener Datensätze erforderlich. Dabei handelte es sich um Studien, bei denen unterschiedliche Nutzergruppen verschiedene Versionen eines Fragebogens erhielten, einzelne Fragestellungen jedoch gruppenübergreifend ausgewertet werden sollten.
+
+Pilotprojekt zur Evaluierung der Kategorisierung offener Angaben mit Large Language Models (LLMs)
+Im Rahmen der Einführung einer unternehmenseigenen KI wurden mögliche Anwendungsfälle für den Tätigkeitsbereich evaluiert. Als erster Use Case wurde die automatisierte Kategorisierung offener Angaben untersucht, die bislang manuell durchgeführt wurde.
+Hierfür wurde zunächst eine Zufallsstichprobe aus mehreren Feldern mit offenen Textangaben gezogen und die Daten randomisiert. Anschließend kategorisierten eine weitere Werkstudentin und ich die Angaben unabhängig voneinander und entwickelten auf dieser Grundlage ein Kategoriensystem. Zur Überprüfung der Übereinstimmung zwischen den manuellen Kodierungen wurde die Intercoder-Reliabilität mithilfe von Cohen’s Kappa berechnet.
+Im nächsten Schritt wurde das entwickelte Kategoriensystem dem LLM zur Verfügung gestellt, welches die offenen Angaben automatisiert klassifizierte. Zur Bewertung der Modellgüte wurden die automatisierten Kategorisierungen mit den manuell erstellten Referenzkategorien verglichen und Precision sowie Recall berechnet.
+Die Ergebnisse der Evaluation wurden anschließend an ein Entwicklerteam weitergegeben, welches auf dieser Grundlage Anpassungen am LLM vornahm.
